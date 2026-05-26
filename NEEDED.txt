@@ -1,0 +1,96 @@
+СПИСОК GIF-ФАЙЛОВ ДЛЯ СКАЧИВАНИЯ
+================================
+
+Положи все файлы в эту папку (gifs/) с точно такими именами.
+Имена в нижнем регистре, через дефис, расширение .gif
+
+ПОНЕДЕЛЬНИК — НОГИ / ЯГОДИЦЫ / ЖИВОТ
+------------------------------------
+[ ] goblet-squat.gif          — Goblet Squat
+    Поиск: "goblet squat gif" / musclewiki.com → Goblet Squat
+
+[ ] walking-lunge.gif         — Walking Lunge
+    Поиск: "walking lunge gif" / musclewiki.com → Dumbbell Walking Lunge
+
+[ ] glute-bridge.gif          — Glute Bridge (подъём таза)
+    Поиск: "glute bridge gif" / musclewiki.com → Glute Bridge
+
+[ ] step-up.gif               — Step-Up
+    Поиск: "dumbbell step up gif" / musclewiki.com → Step Up
+
+[ ] plank.gif                 — Plank (планка)
+    Поиск: "plank exercise gif" / musclewiki.com → Plank
+
+[ ] dead-bug.gif              — Dead Bug
+    Поиск: "dead bug exercise gif" / musclewiki.com → Dead Bug
+
+
+ВТОРНИК — КАРДИО
+----------------
+[ ] cardio.gif                — Кардио на дорожке с наклоном
+    Поиск: "incline treadmill gif" — или любая твоя картинка дорожки
+    (можно пропустить — заглушка тоже норм)
+
+
+СРЕДА — СКАЛОДРОМ / ФУНКЦИОНАЛКА
+--------------------------------
+[ ] climbing.gif              — Скалодром
+    Поиск: "rock climbing gif" / "bouldering gif"
+
+[ ] farmers-walk.gif          — Farmer's Walk
+    Поиск: "farmers walk gif" / musclewiki.com → Farmers Walk
+
+[ ] kettlebell-swing.gif      — Kettlebell Swing (мах гирей)
+    Поиск: "kettlebell swing gif" / musclewiki.com → Kettlebell Swing
+
+[ ] push-up.gif               — Push-Up (отжимания)
+    Поиск: "push up gif" / musclewiki.com → Push Up
+
+[ ] side-plank.gif            — Side Plank (боковая планка)
+    Поиск: "side plank gif" / musclewiki.com → Side Plank
+
+
+ЧЕТВЕРГ — ЛЁГКИЙ ДЕНЬ
+---------------------
+[ ] light-day.gif             — Прогулка / растяжка
+    Поиск: "stretching gif" / "walking gif"
+    (можно пропустить)
+
+
+ПЯТНИЦА — ВЕРХ ТЕЛА / КОР
+-------------------------
+[ ] lat-pulldown.gif          — Lat Pulldown (тяга верхнего блока)
+    Поиск: "lat pulldown gif" / musclewiki.com → Lat Pulldown
+
+[ ] seated-row.gif            — Seated Row (тяга сидя)
+    Поиск: "seated cable row gif" / musclewiki.com → Seated Cable Row
+
+[ ] shoulder-press.gif        — Dumbbell Shoulder Press
+    Поиск: "seated dumbbell shoulder press gif" / musclewiki.com
+
+[ ] romanian-deadlift.gif     — Romanian Deadlift (румынская тяга)
+    Поиск: "romanian deadlift gif" / musclewiki.com → Romanian Deadlift
+
+[ ] pallof-press.gif          — Pallof Press
+    Поиск: "pallof press gif" / musclewiki.com → Pallof Press
+
+[ ] hanging-knee-raise.gif    — Hanging Knee Raise (подъём коленей в висе)
+    Поиск: "hanging knee raise gif" / musclewiki.com → Hanging Knee Raise
+
+
+СУББОТА — ХАЙКИ
+---------------
+[ ] hike-prep.gif             — Подготовка к хайкам
+    Поиск: "hiking with backpack gif" / "stairs incline gif"
+    (можно пропустить)
+
+
+ИТОГО: 21 файл
+Минимум критичных (если совсем лень): 18 — пропустить cardio, light-day, hike-prep.
+
+ВАЖНО
+=====
+• Имена ровно такие, как указано (в нижнем регистре, через дефис)
+• Если файл не найдётся — приложение покажет красивую заглушку
+• Хочешь mp4 вместо gif? Поменяй в index.html расширение в data:
+  ищи строку "gif": "ИМЯ-УПРАЖНЕНИЯ.gif" и замени на .mp4

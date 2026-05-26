@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Тренировки">
+<meta name="theme-color" content="#0d0c0a">
+<title>Тренировки</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<style>
+/* ====== Fonts ======
+   Using system serif/sans stack as a robust offline fallback,
+   with optional web fonts when online. Once visited once with internet,
+   Safari caches them. Fully offline still looks great with the fallback. */
+@font-face {
+  font-family: 'Display';
+  src: local('Bodoni 72'), local('Didot'), local('Georgia');
+  font-display: swap;
+}
+
+:root {
+  --bg: #0d0c0a;
+  --bg-card: #18160f;
+  --bg-elev: #221e15;
+  --ink: #f4ecdc;
+  --ink-dim: #a39a85;
+  --ink-faint: #5d5644;
+  --accent: #d4a045;
+  --accent-bright: #f0c060;
+  --warn: #d96440;
+  --line: #2a251a;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  overscroll-behavior-y: none;
+}
+
+body {
+  min-height: 100vh;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bot);
+}
+
+/* ====== Texture ====== */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse at top, rgba(212, 160, 69, 0.08), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(217, 100, 64, 0.04), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ====== View transitions ====== */
+.view {
+  display: none;
+  animation: fadeIn 0.25s ease;
+}
+.view.active { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ====== Header ====== */
+.masthead {
+  padding: 32px 0 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 28px;
+}
+.masthead .label {
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.masthead h1 {
+  font-family: 'Bodoni 72', 'Didot', Georgia, serif;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 56px;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--ink);
+}
+.masthead h1 .amp {
+  color: var(--accent);
+  font-style: normal;
+}
+.masthead .sub {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--ink-dim);
+  letter-spacing: 0.02em;
+}
+
+/* ====== Rules card ====== */
+.rules {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 20px 22px;
+  margin-bottom: 36px;
+  position: relative;
+  overflow: hidden;
+}
+.rules::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent);
+}
+.rules .rules-label {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.rules h3 {
+  font-family: 'Bodoni 72', 'Didot', Georgia, serif;
+  font-weight: 400;
+  font-size: 22px;
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
+}
+.rules p {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: var(--ink);
+}
+.rules .warn-list {
+  margin: 8px 0 8px;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+.rules .warn-list li {
+  padding-left: 18px;
+  position: relative;
+  margin-bottom: 4px;
+}
+.rules .warn-list li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--warn);
+}
+.rules .verdict {
+  margin-top: 10px;
+  font-style: italic;
+  color: var(--accent-bright);
+  font-size: 14px;
+}
+
+/* ====== Day cards ====== */
+.day {
+  display: block;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  position: relative;
+}
+.day:active {
+  transform: scale(0.985);
+  background: var(--bg-elev);
+  border-color: var(--accent);
+}
+.day-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+.day-name {
+  font-family: 'Bodoni 72', 'Didot', Georgia, serif;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.day-num {
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+.day-focus {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.day-meta {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+  font-size: 13px;
+  color: var(--ink-dim);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.day-meta .arrow {
+  color: var(--accent);
+  font-size: 16px;
+}
+
+/* ====== Exercise page ====== */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 24px 0 16px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.back::before {
+  content: '←';
+  font-size: 20px;
+  line-height: 1;
+}
+
+.day-header {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 32px;
+}
+.day-header .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.day-header h2 {
+  font-family: 'Bodoni 72', 'Didot', Georgia, serif;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 48px;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+.day-header .focus-line {
+  font-size: 15px;
+  color: var(--ink-dim);
+}
+
+/* Exercise list within a day */
+.ex-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ex-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease, padding 0.15s ease;
+}
+.ex-item:active {
+  background: var(--bg-elev);
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.ex-num {
+  font-family: 'Bodoni 72', 'Didot', Georgia, serif;
+  font-size: 36px;
+  font-style: italic;
+  color: var(--accent);
+  width: 48px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.ex-info { flex: 1; min-width: 0; }
+.ex-name {
+  font-size: 18px;
+  color: var(--ink);
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+.ex-eng {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.ex-arrow {
+  color: var(--ink-faint);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* ====== Exercise detail ====== */
+.ex-detail .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.ex-detail h2 {
+  font-family: 'Bodoni 72', 'Didot', Georgia, serif;
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px;
+}
+.ex-detail .english {
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 24px;
+}
+
+/* GIF / video frame */
+.media {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+  overflow: hidden;
+  position: relative;
+}
+.media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.media.error { display: flex; }
+.media-placeholder {
+  text-align: center;
+  padding: 32px;
+  color: var(--ink-faint);
+}
+.media-placeholder .ico {
+  font-family: 'Bodoni 72', 'Didot', Georgia, serif;
+  font-size: 64px;
+  font-style: italic;
+  color: var(--accent);
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+.media-placeholder .ph-title {
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 8px;
+}
+.media-placeholder .ph-file {
+  font-family: ui-monospace, SF Mono, monospace;
+  font-size: 12px;
+  color: var(--accent);
+  background: rgba(212, 160, 69, 0.1);
+  padding: 4px 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* Stat blocks */
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-bottom: 28px;
+}
+.stat {
+  background: var(--bg-card);
+  padding: 18px 20px;
+}
+.stat .label {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+}
+.stat .val {
+  font-family: 'Bodoni 72', 'Didot', Georgia, serif;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.stat .val .small {
+  display: block;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+
+/* Section heads */
+.section {
+  margin-bottom: 28px;
+}
+.section h4 {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.technique {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.technique li {
+  padding: 8px 0 8px 28px;
+  position: relative;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.technique li::before {
+  content: counter(step, decimal-leading-zero);
+  counter-increment: step;
+  position: absolute;
+  left: 0;
+  top: 8px;
+  font-family: 'Bodoni 72', 'Didot', Georgia, serif;
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+.technique { counter-reset: step; }
+
+.weight-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.weight-list li {
+  padding: 6px 0;
+  font-size: 16px;
+  color: var(--ink);
+  border-bottom: 1px dashed var(--line);
+}
+.weight-list li:last-child { border-bottom: none; }
+
+.important {
+  background: linear-gradient(135deg, rgba(217, 100, 64, 0.12), rgba(217, 100, 64, 0.04));
+  border: 1px solid rgba(217, 100, 64, 0.3);
+  border-left: 3px solid var(--warn);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  border-radius: 2px;
+  font-size: 15px;
+  color: var(--ink);
+}
+.important::before {
+  content: 'Внимание';
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--warn);
+  margin-bottom: 6px;
+}
+
+footer {
+  padding: 48px 0 32px;
+  text-align: center;
+  color: var(--ink-faint);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+footer .dot { color: var(--accent); margin: 0 8px; }
+
+/* iPhone tweaks */
+@media (max-width: 480px) {
+  main { padding: 0 20px; }
+  .masthead h1 { font-size: 44px; }
+  .day-name { font-size: 26px; }
+  .day-header h2 { font-size: 38px; }
+  .ex-detail h2 { font-size: 32px; }
+  .stats { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<main>
+
+  <!-- HOME VIEW -->
+  <section id="view-home" class="view active">
+    <header class="masthead">
+      <div class="label">Тренировки · Личный план</div>
+      <h1>Шесть<br>дней<span class="amp">,</span><br><em>одна цель</em></h1>
+      <div class="sub">Понедельник — суббота · Воскресенье отдых</div>
+    </header>
+
+    <div id="rules-card"></div>
+
+    <div id="days-list"></div>
+
+    <footer>
+      Работает офлайн <span class="dot">·</span> Сохрани на главный экран
+    </footer>
+  </section>
+
+  <!-- DAY VIEW -->
+  <section id="view-day" class="view">
+    <button class="back" onclick="navigate('')">Назад</button>
+    <header class="day-header">
+      <div class="eyebrow" id="day-eyebrow"></div>
+      <h2 id="day-title"></h2>
+      <div class="focus-line" id="day-focus"></div>
+    </header>
+    <ul class="ex-list" id="ex-list"></ul>
+    <footer>
+      Тапни на упражнение для деталей
+    </footer>
+  </section>
+
+  <!-- EXERCISE VIEW -->
+  <section id="view-ex" class="view">
+    <button class="back" id="ex-back">Назад</button>
+    <article class="ex-detail" id="ex-detail"></article>
+    <footer>&nbsp;</footer>
+  </section>
+
+</main>
+
+<script>
+// ====== EMBEDDED DATA ======
+const DATA = {
+  "rules": {
+    "title": "Общие правила",
+    "weight": "Твой рабочий вес должен быть таким, чтобы последние 2 повтора давались тяжело, НО техника не ломалась.",
+    "warnings": [
+      "выгибается поясница",
+      "трясёт корпус",
+      "теряется контроль"
+    ],
+    "verdict": "→ вес слишком большой."
+  },
+  "days": [
+    {
+      "id": "mon",
+      "name": "Понедельник",
+      "focus": "Ноги · Ягодицы · Живот",
+      "exercises": ["goblet-squat", "walking-lunge", "glute-bridge", "step-up", "plank", "dead-bug"]
+    },
+    {
+      "id": "tue",
+      "name": "Вторник",
+      "focus": "Кардио",
+      "exercises": ["cardio"]
+    },
+    {
+      "id": "wed",
+      "name": "Среда",
+      "focus": "Скалодром или функционалка",
+      "exercises": ["climbing", "farmers-walk", "kettlebell-swing", "push-up", "side-plank"]
+    },
+    {
+      "id": "thu",
+      "name": "Четверг",
+      "focus": "Лёгкий день",
+      "exercises": ["light-day"]
+    },
+    {
+      "id": "fri",
+      "name": "Пятница",
+      "focus": "Верх тела · Кор",
+      "exercises": ["lat-pulldown", "seated-row", "shoulder-press", "romanian-deadlift", "pallof-press", "hanging-knee-raise"]
+    },
+    {
+      "id": "sat",
+      "name": "Суббота",
+      "focus": "Подготовка к хайкам",
+      "exercises": ["hike-prep"]
+    }
+  ],
+  "exercises": {
+    "goblet-squat": {
+      "num": 1,
+      "name": "Присед с гантелью у груди",
+      "english": "Goblet Squat",
+      "gif": "goblet-squat.gif",
+      "sets": "3 × 10",
+      "weight": ["начни с 16–20 кг", "потом 24 кг"],
+      "technique": [
+        "Берёшь одну тяжёлую гантель и держишь перед грудью двумя руками.",
+        "Приседаешь медленно вниз.",
+        "Спина ровная.",
+        "Колени не сводишь."
+      ]
+    },
+    "walking-lunge": {
+      "num": 2,
+      "name": "Выпады вперёд",
+      "english": "Walking Lunge",
+      "gif": "walking-lunge.gif",
+      "sets": "3 × 10 на каждую ногу",
+      "weight": ["сначала 2×8 кг", "потом 2×12–16 кг", "можно без веса"],
+      "technique": [
+        "Шаг вперёд → присел → вернулся.",
+        "Колено передней ноги над пяткой, не вылетает за носок.",
+        "Корпус прямой."
+      ]
+    },
+    "glute-bridge": {
+      "num": 3,
+      "name": "Подъём таза лёжа",
+      "english": "Glute Bridge",
+      "important": "Очень важно! Одно из лучших упражнений при лордозе.",
+      "gif": "glute-bridge.gif",
+      "sets": "4 × 12",
+      "weight": ["сначала без веса", "потом блин 10–20 кг на таз"],
+      "technique": [
+        "Лежишь на спине.",
+        "Ноги согнуты.",
+        "Поднимаешь таз вверх за счёт ягодиц.",
+        "НЕ поясницей."
+      ]
+    },
+    "step-up": {
+      "num": 4,
+      "name": "Подъём на платформу",
+      "english": "Step-Up",
+      "gif": "step-up.gif",
+      "sets": "3 × 12 на ногу",
+      "weight": ["сначала без веса", "потом 2×10–14 кг"],
+      "technique": [
+        "Берёшь лавку/ступеньку примерно по колено.",
+        "Поднимаешься одной ногой.",
+        "Почти идеальная тренировка под хайки."
+      ]
+    },
+    "plank": {
+      "num": 5,
+      "name": "Планка",
+      "english": "Plank",
+      "gif": "plank.gif",
+      "sets": "3 × 30–60 секунд",
+      "weight": [],
+      "technique": [
+        "Держишь тело ровно.",
+        "Не провисать поясницей.",
+        "Живот слегка напряжён.",
+        "Таз не вверх."
+      ]
+    },
+    "dead-bug": {
+      "num": 6,
+      "name": "Dead Bug — «мёртвый жук»",
+      "english": "Dead Bug",
+      "gif": "dead-bug.gif",
+      "sets": "3 × 12",
+      "weight": [],
+      "technique": [
+        "Лежишь на спине.",
+        "Поднимаешь противоположные руку и ногу.",
+        "Главное: поясница прижата к полу.",
+        "Супер-упражнение для глубокого кора."
+      ]
+    },
+    "cardio": {
+      "num": 1,
+      "name": "Кардио на дорожке",
+      "english": "Incline Treadmill",
+      "gif": "cardio.gif",
+      "sets": "45–60 мин",
+      "weight": ["угол вверх", "скорость 4–6 км/ч"],
+      "technique": [
+        "Должно быть тяжело дышать — но ещё мочь говорить.",
+        "После: растянуть переднюю поверхность бедра, ягодицы, икры."
+      ]
+    },
+    "climbing": {
+      "num": 1,
+      "name": "Скалодром",
+      "english": "Bouldering / Climbing",
+      "gif": "climbing.gif",
+      "sets": "до усталости",
+      "weight": [],
+      "technique": [
+        "Реально полезен: хват, спина, кор, баланс, координация.",
+        "Не пытайся силой победить стену.",
+        "Лучше: медленно, технично, длинные трассы."
+      ]
+    },
+    "farmers-walk": {
+      "num": 2,
+      "name": "Перенос тяжёлых гантелей",
+      "english": "Farmer's Walk",
+      "gif": "farmers-walk.gif",
+      "sets": "5 проходов по 30–40 метров",
+      "weight": ["начни с 2×24 кг", "потом 2×30+ кг"],
+      "technique": [
+        "Берёшь тяжёлые гантели и просто идёшь.",
+        "Выглядит тупо — но невероятно полезно.",
+        "Качает: кор, хват, спину, таз, устойчивость."
+      ]
+    },
+    "kettlebell-swing": {
+      "num": 3,
+      "name": "Мах гирей между ног",
+      "english": "Kettlebell Swing",
+      "gif": "kettlebell-swing.gif",
+      "sets": "3 × 15",
+      "weight": ["16 кг для начала", "потом 20–24 кг"],
+      "technique": [
+        "Гиря идёт за счёт толчка тазом.",
+        "НЕ руками.",
+        "Полезно для ягодиц, выносливости, задней цепи мышц.",
+        "Техника важна."
+      ]
+    },
+    "push-up": {
+      "num": 4,
+      "name": "Отжимания",
+      "english": "Push-Up",
+      "gif": "push-up.gif",
+      "sets": "3 × 12–20",
+      "weight": [],
+      "technique": [
+        "Тело прямой линией от макушки до пяток.",
+        "Локти под углом ~45° к корпусу."
+      ]
+    },
+    "side-plank": {
+      "num": 5,
+      "name": "Боковая планка",
+      "english": "Side Plank",
+      "gif": "side-plank.gif",
+      "sets": "3 × 30 сек на сторону",
+      "weight": [],
+      "technique": [
+        "Держишь тело боком.",
+        "Очень полезно для таза и поясницы."
+      ]
+    },
+    "light-day": {
+      "num": 1,
+      "name": "Лёгкий день",
+      "english": "Recovery",
+      "gif": "light-day.gif",
+      "sets": "20–30 мин",
+      "weight": [],
+      "technique": [
+        "Прогулка.",
+        "Дорожка 20–30 мин.",
+        "Растяжка: передняя поверхность бедра, ягодицы, грудной отдел."
+      ]
+    },
+    "lat-pulldown": {
+      "num": 1,
+      "name": "Тяга верхнего блока",
+      "english": "Lat Pulldown",
+      "gif": "lat-pulldown.gif",
+      "sets": "3 × 12",
+      "weight": ["начни 45–55 кг", "потом выше"],
+      "technique": [
+        "Тянешь ручку сверху к груди.",
+        "Лопатки сводишь, локти вниз."
+      ]
+    },
+    "seated-row": {
+      "num": 2,
+      "name": "Тяга сидя к животу",
+      "english": "Seated Row",
+      "gif": "seated-row.gif",
+      "sets": "3 × 12",
+      "weight": ["40–55 кг"],
+      "technique": [
+        "Спина прямая.",
+        "Тяга локтями назад, к животу."
+      ]
+    },
+    "shoulder-press": {
+      "num": 3,
+      "name": "Жим гантелей вверх сидя",
+      "english": "Dumbbell Shoulder Press",
+      "gif": "shoulder-press.gif",
+      "sets": "3 × 10",
+      "weight": ["2×12–16 кг"],
+      "technique": [
+        "Сидя, спина прижата к спинке.",
+        "Гантели жмёшь вверх, не до полного локаута."
+      ]
+    },
+    "romanian-deadlift": {
+      "num": 4,
+      "name": "Румынская тяга",
+      "english": "Romanian Deadlift",
+      "important": "Очень аккуратно. НЕ круглая спина.",
+      "gif": "romanian-deadlift.gif",
+      "sets": "3 × 10",
+      "weight": ["штанга 40–60 кг сначала"],
+      "technique": [
+        "Отводишь таз назад.",
+        "Растягиваются задняя поверхность бедра и ягодицы.",
+        "Спина ровная, без округления."
+      ]
+    },
+    "pallof-press": {
+      "num": 5,
+      "name": "Удержание резинки перед собой",
+      "english": "Pallof Press",
+      "gif": "pallof-press.gif",
+      "sets": "3 × 12",
+      "weight": [],
+      "technique": [
+        "Берёшь резинку или трос сбоку.",
+        "Выталкиваешь руки вперёд.",
+        "Тебя пытается развернуть — сопротивляешься корпусом.",
+        "Очень полезно при лордозе и слабом коре."
+      ]
+    },
+    "hanging-knee-raise": {
+      "num": 6,
+      "name": "Подъём коленей в висе",
+      "english": "Hanging Knee Raise",
+      "gif": "hanging-knee-raise.gif",
+      "sets": "3 × 10",
+      "weight": [],
+      "technique": [
+        "Висишь и поднимаешь колени.",
+        "НЕ раскачиваться."
+      ]
+    },
+    "hike-prep": {
+      "num": 1,
+      "name": "Подготовка к хайкам",
+      "english": "Hike Prep",
+      "gif": "hike-prep.gif",
+      "sets": "по самочувствию",
+      "weight": ["рюкзак: начни 5 кг", "потом 8–10 кг"],
+      "technique": [
+        "Ходьба.",
+        "Лестницы.",
+        "Incline (наклон).",
+        "С рюкзаком."
+      ]
+    }
+  }
+};
+
+// ====== ROUTER ======
+function navigate(hash) {
+  if (hash) location.hash = hash;
+  else { history.pushState('', '', location.pathname); window.scrollTo(0,0); render(); }
+}
+
+function getRoute() {
+  const h = location.hash.replace(/^#/, '');
+  if (!h) return { view: 'home' };
+  const parts = h.split('/').filter(Boolean);
+  if (parts[0] === 'day' && parts[1]) {
+    if (parts[2] === 'ex' && parts[3]) return { view: 'ex', day: parts[1], ex: parts[3] };
+    return { view: 'day', day: parts[1] };
+  }
+  return { view: 'home' };
+}
+
+function show(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ====== RENDER: HOME ======
+function renderHome() {
+  // Rules
+  const r = DATA.rules;
+  document.getElementById('rules-card').innerHTML = `
+    <div class="rules">
+      <div class="rules-label">${escapeHtml(r.title)}</div>
+      <h3>Вес</h3>
+      <p>${escapeHtml(r.weight)}</p>
+      <p style="margin-top:14px; color: var(--ink-dim); font-size: 14px;">Если:</p>
+      <ul class="warn-list">
+        ${r.warnings.map(w => `<li>${escapeHtml(w)}</li>`).join('')}
+      </ul>
+      <div class="verdict">${escapeHtml(r.verdict)}</div>
+    </div>
+  `;
+
+  // Days
+  document.getElementById('days-list').innerHTML = DATA.days.map((d, i) => {
+    const count = d.exercises.length;
+    const countText = count === 1 ? '1 упражнение' : count < 5 ? `${count} упражнения` : `${count} упражнений`;
+    return `
+      <a class="day" href="#day/${d.id}">
+        <div class="day-top">
+          <div class="day-name">${escapeHtml(d.name)}</div>
+          <div class="day-num">День ${String(i+1).padStart(2,'0')}</div>
+        </div>
+        <div class="day-focus">${escapeHtml(d.focus)}</div>
+        <div class="day-meta">
+          <span>${countText}</span>
+          <span class="arrow">→</span>
+        </div>
+      </a>
+    `;
+  }).join('');
+}
+
+// ====== RENDER: DAY ======
+function renderDay(dayId) {
+  const day = DATA.days.find(d => d.id === dayId);
+  if (!day) { navigate(''); return; }
+  const idx = DATA.days.indexOf(day);
+  document.getElementById('day-eyebrow').textContent = `День ${String(idx+1).padStart(2,'0')}`;
+  document.getElementById('day-title').textContent = day.name;
+  document.getElementById('day-focus').textContent = day.focus;
+
+  document.getElementById('ex-list').innerHTML = day.exercises.map(exId => {
+    const ex = DATA.exercises[exId];
+    if (!ex) return '';
+    return `
+      <a class="ex-item" href="#day/${day.id}/ex/${exId}">
+        <div class="ex-num">${String(ex.num).padStart(2,'0')}</div>
+        <div class="ex-info">
+          <div class="ex-name">${escapeHtml(ex.name)}</div>
+          <div class="ex-eng">${escapeHtml(ex.english)}</div>
+        </div>
+        <div class="ex-arrow">→</div>
+      </a>
+    `;
+  }).join('');
+}
+
+// ====== RENDER: EXERCISE ======
+function renderExercise(dayId, exId) {
+  const day = DATA.days.find(d => d.id === dayId);
+  const ex = DATA.exercises[exId];
+  if (!day || !ex) { navigate(''); return; }
+
+  document.getElementById('ex-back').onclick = () => { location.hash = 'day/' + dayId; };
+
+  const weightHtml = (ex.weight && ex.weight.length) ? `
+    <div class="section">
+      <h4>Вес</h4>
+      <ul class="weight-list">
+        ${ex.weight.map(w => `<li>${escapeHtml(w)}</li>`).join('')}
+      </ul>
+    </div>
+  ` : '';
+
+  const importantHtml = ex.important ? `
+    <div class="important">${escapeHtml(ex.important)}</div>
+  ` : '';
+
+  document.getElementById('ex-detail').innerHTML = `
+    <div class="eyebrow">${escapeHtml(day.name)} · Упражнение ${String(ex.num).padStart(2,'0')}</div>
+    <h2>${escapeHtml(ex.name)}</h2>
+    <div class="english">${escapeHtml(ex.english)}</div>
+
+    <div class="media" id="media-box">
+      <img src="gifs/${ex.gif}" alt="${escapeHtml(ex.name)}"
+           onerror="this.style.display='none'; this.parentNode.innerHTML = mediaPlaceholder('${escapeHtml(ex.gif)}');">
+    </div>
+
+    ${importantHtml}
+
+    <div class="stats">
+      <div class="stat">
+        <div class="label">Подходы</div>
+        <div class="val">${escapeHtml(ex.sets)}</div>
+      </div>
+      <div class="stat">
+        <div class="label">Английское</div>
+        <div class="val" style="font-size: 18px;">${escapeHtml(ex.english)}</div>
+      </div>
+    </div>
+
+    ${weightHtml}
+
+    <div class="section">
+      <h4>Техника</h4>
+      <ol class="technique">
+        ${ex.technique.map(t => `<li>${escapeHtml(t)}</li>`).join('')}
+      </ol>
+    </div>
+  `;
+}
+
+function mediaPlaceholder(filename) {
+  return `
+    <div class="media-placeholder">
+      <div class="ico">?</div>
+      <div class="ph-title">GIF не найден</div>
+      <div class="ph-file">gifs/${filename}</div>
+    </div>
+  `;
+}
+
+// ====== ROUTING DISPATCH ======
+function render() {
+  const r = getRoute();
+  if (r.view === 'home') {
+    renderHome();
+    show('view-home');
+  } else if (r.view === 'day') {
+    renderDay(r.day);
+    show('view-day');
+  } else if (r.view === 'ex') {
+    renderExercise(r.day, r.ex);
+    show('view-ex');
+  }
+}
+
+window.addEventListener('hashchange', render);
+window.addEventListener('load', render);
+
+// ====== UTIL ======
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
+// ====== SERVICE WORKER ======
+// Регистрируем сервис-воркер для офлайн-работы.
+// Работает только по https:// или http://localhost — на file:// будет тихо игнорироваться.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('SW зарегистрирован:', reg.scope))
+      .catch(err => console.warn('SW не зарегистрирован:', err));
+  });
+}
+</script>
+</body>
+</html>
