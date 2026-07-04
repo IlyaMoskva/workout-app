@@ -29,7 +29,7 @@ body {
 
 .app-nav {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   position: sticky;
   top: 0;
@@ -347,10 +347,136 @@ h4 {
   padding: 16px 0 18px;
 }
 
+.week-header {
+  padding: 16px 0 18px;
+}
+
 .library-subtitle {
   margin: 10px 0 0;
   color: #a9b0a2;
   font-size: 15px;
+}
+
+.week-subtitle {
+  margin: 10px 0 0;
+  color: #a9b0a2;
+  font-size: 15px;
+}
+
+.week-list {
+  display: grid;
+  gap: 14px;
+  padding-bottom: 32px;
+}
+
+.week-day-card {
+  border: 1px solid #2f342d;
+  border-radius: 8px;
+  background: #171a16;
+  overflow: hidden;
+}
+
+.week-day-card.is-today {
+  border-color: #6f8c56;
+}
+
+.week-day-heading {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: #1e241e;
+}
+
+.week-day-heading > span {
+  width: fit-content;
+  border: 1px solid #465446;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #dce8d1;
+  background: #182119;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.week-day-card.is-today .week-day-heading > span {
+  border-color: #6f8c56;
+  background: #23331f;
+}
+
+.week-day-name {
+  margin: 0 0 8px;
+  color: #f0b85a;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.week-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding: 16px;
+  border-top: 1px solid #2f342d;
+}
+
+.week-meta-grid div {
+  min-width: 0;
+  border: 1px solid #2c342c;
+  border-radius: 8px;
+  background: #141813;
+  padding: 10px;
+}
+
+.week-meta-grid dt {
+  margin: 0 0 5px;
+  color: #98a092;
+  font-size: 12px;
+}
+
+.week-meta-grid dd {
+  margin: 0;
+  color: #f7f1e8;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.week-progress {
+  display: grid;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.week-progress span {
+  color: #a9b0a2;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.week-detail-section {
+  padding: 16px;
+  border-top: 1px solid #2f342d;
+}
+
+.week-detail-section h3 {
+  margin-bottom: 10px;
+}
+
+.week-detail-section p {
+  margin: 0;
+  color: #c6cdbc;
+  line-height: 1.45;
+  font-size: 14px;
+}
+
+.week-detail-section ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: #c6cdbc;
+  line-height: 1.45;
+  font-size: 14px;
 }
 
 .filter-grid {
@@ -526,5 +652,10 @@ h4 {
 
   .exercise-meta-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .week-day-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
   }
 }

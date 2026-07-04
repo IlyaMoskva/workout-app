@@ -7,13 +7,14 @@ import {
   type ExercisePrescription,
   type GoalId,
   type Project45Exercise,
+  type TrainingDay,
   type WorkoutBlock,
   type WorkoutSession,
 } from './domain';
 import { completionId } from './completion/completionId';
 import './styles.css';
 
-type AppView = 'today' | 'library';
+type AppView = 'today' | 'week' | 'library';
 
 const COMPLETION_STORAGE_KEY = 'project45.today.completions.v1';
 
@@ -21,6 +22,10 @@ const weekdayFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
   month: 'short',
   day: 'numeric',
+});
+
+const weekdayNameFormatter = new Intl.DateTimeFormat(undefined, {
+  weekday: 'long',
 });
 
 const exerciseById = new Map(PROJECT45_EXERCISES.map((exercise) => [exercise.id, exercise]));
@@ -45,6 +50,12 @@ const formatDateKey = (date: Date): string => {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+};
+
+const addDays = (date: Date, days: number): Date => {
+  const nextDate = new Date(date);
+  nextDate.setDate(date.getDate() + days);
+  return nextDate;
 };
 
 const readCompletions = (): Set<string> => {
@@ -132,20 +143,19 @@ const exerciseHasGoal = (exercise: Project45Exercise, goal: GoalId): boolean =>
 const exerciseHasEquipment = (exercise: Project45Exercise, equipment: EquipmentId): boolean =>
   exerciseEquipment(exercise).includes(equipment);
 
-function TodayScreen() {
-  const [completedIds, setCompletedIds] = useState<Set<string>>(() => readCompletions());
-  const today = useMemo(() => new Date(), []);
-  const dateKey = formatDateKey(today);
-  const trainingDay = resolveTrainingDay(today);
-  const totalMinutes = trainingDay.sessions.reduce(
-    (minutes, session) => minutes + (session.estimatedDurationMinutes ?? 0),
-    0,
-  );
-  const totalPrescriptions = trainingDay.sessions.reduce(
+const trainingDayDate = (today: Date, trainingDay: TrainingDay): Date => {
+  const currentDayIndex = ((today.getDay() + 6) % 7) + 1;
+  return addDays(today, trainingDay.dayIndex - currentDayIndex);
+};
+
+const trainingDayPrescriptionCount = (trainingDay: TrainingDay): number =>
+  trainingDay.sessions.reduce(
     (total, session) => total + session.blocks.reduce((blockTotal, block) => blockTotal + block.prescriptions.length, 0),
     0,
   );
-  const completedToday = trainingDay.sessions.reduce(
+
+const completedPrescriptionCount = (dateKey: string, trainingDay: TrainingDay, completedIds: Set<string>): number =>
+  trainingDay.sessions.reduce(
     (total, session) =>
       total +
       session.blocks.reduce(
@@ -158,6 +168,18 @@ function TodayScreen() {
       ),
     0,
   );
+
+function TodayScreen() {
+  const [completedIds, setCompletedIds] = useState<Set<string>>(() => readCompletions());
+  const today = useMemo(() => new Date(), []);
+  const dateKey = formatDateKey(today);
+  const trainingDay = resolveTrainingDay(today);
+  const totalMinutes = trainingDay.sessions.reduce(
+    (minutes, session) => minutes + (session.estimatedDurationMinutes ?? 0),
+    0,
+  );
+  const totalPrescriptions = trainingDayPrescriptionCount(trainingDay);
+  const completedToday = completedPrescriptionCount(dateKey, trainingDay, completedIds);
   const dayProgress = totalPrescriptions > 0 ? Math.round((completedToday / totalPrescriptions) * 100) : 0;
 
   useEffect(() => {
@@ -295,6 +317,106 @@ function TodayScreen() {
   );
 }
 
+function WeekScreen() {
+  const [completedIds] = useState<Set<string>>(() => readCompletions());
+  const today = useMemo(() => new Date(), []);
+  const currentTrainingDay = resolveTrainingDay(today);
+
+  return (
+    <>
+      <header className="week-header">
+        <p className="eyebrow">Plan</p>
+        <h1>Week</h1>
+        <p className="week-subtitle">7-day Project45 seed plan</p>
+      </header>
+
+      <section className="week-list" aria-label="Project45 week">
+        {PROJECT45_WEEKLY_SEED_PLAN.days.map((trainingDay) => {
+          const dayDate = trainingDayDate(today, trainingDay);
+          const dateKey = formatDateKey(dayDate);
+          const totalPrescriptions = trainingDayPrescriptionCount(trainingDay);
+          const completedCount = completedPrescriptionCount(dateKey, trainingDay, completedIds);
+          const durationMinutes = trainingDay.sessions.reduce(
+            (total, session) => total + (session.estimatedDurationMinutes ?? 0),
+            0,
+          );
+          const locations = [...new Set(trainingDay.sessions.map((session) => session.location))];
+          const mainBlockTitles = trainingDay.sessions.flatMap((session) =>
+            session.blocks.filter((block) => block.type === 'main').map((block) => block.name),
+          );
+          const visibleBlockTitles =
+            mainBlockTitles.length > 0
+              ? mainBlockTitles
+              : trainingDay.sessions.flatMap((session) => session.blocks.map((block) => block.name));
+          const isToday = trainingDay.dayIndex === currentTrainingDay.dayIndex;
+          const progress = totalPrescriptions > 0 ? Math.round((completedCount / totalPrescriptions) * 100) : 0;
+
+          return (
+            <article className={`week-day-card${isToday ? ' is-today' : ''}`} key={trainingDay.id}>
+              <div className="week-day-heading">
+                <div>
+                  <p className="week-day-name">{weekdayNameFormatter.format(dayDate)}</p>
+                  <h2>{trainingDay.title}</h2>
+                </div>
+                <span>{isToday ? 'Today' : `Day ${trainingDay.dayIndex}`}</span>
+              </div>
+
+              <dl className="week-meta-grid">
+                <div>
+                  <dt>Sessions</dt>
+                  <dd>{trainingDay.sessions.length}</dd>
+                </div>
+                <div>
+                  <dt>Time</dt>
+                  <dd>{durationMinutes} min</dd>
+                </div>
+                <div>
+                  <dt>Done</dt>
+                  <dd>
+                    {completedCount}/{totalPrescriptions}
+                  </dd>
+                </div>
+              </dl>
+
+              <div className="week-progress" aria-label={`${trainingDay.title} completion`}>
+                <span>{progress}% complete</span>
+                <progress value={completedCount} max={totalPrescriptions}>
+                  {progress}%
+                </progress>
+              </div>
+
+              <section className="week-detail-section">
+                <h3>Locations</h3>
+                <p>{locations.map(labelText).join(', ')}</p>
+              </section>
+
+              <section className="week-detail-section">
+                <h3>Main Blocks</h3>
+                <ul>
+                  {visibleBlockTitles.map((title) => (
+                    <li key={title}>{title}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="week-detail-section">
+                <h3>Sessions</h3>
+                <ul>
+                  {trainingDay.sessions.map((session) => (
+                    <li key={session.id}>
+                      {session.title} - {labelText(session.location)} - {session.estimatedDurationMinutes ?? 0} min
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </article>
+          );
+        })}
+      </section>
+    </>
+  );
+}
+
 function ExerciseLibraryScreen() {
   const [goalFilter, setGoalFilter] = useState<GoalId | 'all'>('all');
   const [equipmentFilter, setEquipmentFilter] = useState<EquipmentId | 'all'>('all');
@@ -409,11 +531,16 @@ function App() {
         <button aria-pressed={view === 'today'} onClick={() => setView('today')} type="button">
           Today
         </button>
+        <button aria-pressed={view === 'week'} onClick={() => setView('week')} type="button">
+          Week
+        </button>
         <button aria-pressed={view === 'library'} onClick={() => setView('library')} type="button">
           Library
         </button>
       </nav>
-      {view === 'today' ? <TodayScreen /> : <ExerciseLibraryScreen />}
+      {view === 'today' ? <TodayScreen /> : null}
+      {view === 'week' ? <WeekScreen /> : null}
+      {view === 'library' ? <ExerciseLibraryScreen /> : null}
     </main>
   );
 }
