@@ -38,4 +38,5 @@ export type {
   WorkoutSession,
   WorkoutSessionId,
 } from './workouts';
-export { BLOCK_TYPES, LOCATION_TYPES, SESSION_TYPES } from './workouts';
+export type { Project45WeeklySeedPlan } from './workouts';
+export { BLOCK_TYPES, LOCATION_TYPES, PROJECT45_WEEKLY_SEED_PLAN, SESSION_TYPES } from './workouts';
