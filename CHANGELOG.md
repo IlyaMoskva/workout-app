@@ -13,6 +13,7 @@ Added:
 - Initial domain types for goals, capabilities, exercises, equipment, muscle groups, and risk levels.
 - Domain constants and readonly exercise metadata shapes for the model foundation.
 - Typed workout planning model for plans, training days, sessions, blocks, and exercise prescriptions.
+- First small typed Project45 exercise catalog covering GTO, core, hyperlordosis, pelvic floor, and endurance.
 
 Changed:
 
