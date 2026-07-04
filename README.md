@@ -51,8 +51,9 @@ The first domain slice includes:
 - exercise risk levels
 - exercise metadata
 - coaching cues and substitutions
+- workout planning types
 
-Workout plans, progress, recovery, and real catalog data will come in separate focused PRs.
+Workout generation, progress, recovery, and real catalog data will come in separate focused PRs.
 
 ## Working agreement
 
@@ -64,7 +65,6 @@ Workout plans, progress, recovery, and real catalog data will come in separate f
 
 ## Next PRs
 
-1. Workout plan model.
-2. Project 45 exercise catalog and seed plan.
-3. Today-first MVP UI.
-4. Progress and recovery tracking.
+1. Project 45 exercise catalog and seed plan.
+2. Today-first MVP UI.
+3. Progress and recovery tracking.
