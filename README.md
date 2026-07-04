@@ -1,10 +1,10 @@
-# Project 45
+# Project45
 
-Project 45 is the next version of the workout app. The current goal is to evolve the original single-file training PWA into a maintainable Human Performance OS.
+Project45 is a local-first workout planning app for building a personal Human Performance OS. It evolves the original single-file training PWA into a maintainable React and TypeScript product.
 
 ## Current status
 
-The React infrastructure is in place. The current branch starts the domain model with typed goals, capabilities, and exercises.
+The React infrastructure and first domain model slices are in place, including typed goals, capabilities, exercises, and workout planning.
 
 The legacy `index.html` app is intentionally kept untouched. The new React app lives under `app/` and is used by Vite as the development/build root.
 
@@ -40,7 +40,7 @@ index.html           Legacy single-file workout app, kept for now
 
 ## Domain model direction
 
-Project 45 will treat exercises as knowledge objects, not as UI rows.
+Project45 treats exercises as knowledge objects, not as UI rows.
 
 The first domain slice includes:
 
@@ -65,6 +65,6 @@ Workout generation, progress, recovery, and real catalog data will come in separ
 
 ## Next PRs
 
-1. Project 45 exercise catalog and seed plan.
+1. Project45 exercise catalog and seed plan.
 2. Today-first MVP UI.
 3. Progress and recovery tracking.
