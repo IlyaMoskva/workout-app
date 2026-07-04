@@ -8,6 +8,7 @@ import {
   type WorkoutBlock,
   type WorkoutSession,
 } from './domain';
+import { completionId } from './completion/completionId';
 import './styles.css';
 
 const COMPLETION_STORAGE_KEY = 'project45.today.completions.v1';
@@ -35,13 +36,6 @@ const formatDateKey = (date: Date): string => {
 
   return `${year}-${month}-${day}`;
 };
-
-const completionId = (
-  dateKey: string,
-  session: WorkoutSession,
-  block: WorkoutBlock,
-  prescription: ExercisePrescription,
-): string => `${dateKey}:${session.id}:${block.id}:${prescription.exerciseId}`;
 
 const readCompletions = (): Set<string> => {
   try {
