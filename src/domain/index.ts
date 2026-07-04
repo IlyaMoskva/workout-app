@@ -20,6 +20,8 @@ export type {
   MuscleTarget,
 } from './exercises/exercise.types';
 export { EQUIPMENT_IDS, MUSCLE_GROUPS, RISK_LEVELS } from './exercises/exercise.types';
+export type { Project45Exercise } from './exercises/catalog';
+export { PROJECT45_EXERCISES } from './exercises/catalog';
 
 export type {
   BlockType,
