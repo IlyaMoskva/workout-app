@@ -14,9 +14,33 @@ import {
 import { completionId } from './completion/completionId';
 import './styles.css';
 
-type AppView = 'today' | 'week' | 'library';
+type AppView = 'today' | 'week' | 'gto' | 'library';
+type GtoMetricId = 'run2KmSeconds' | 'pushUps' | 'pullUps' | 'absOneMinute' | 'sitAndReachCm';
+type GtoEntry = Readonly<{
+  id: string;
+  date: string;
+  run2KmSeconds?: number;
+  pushUps?: number;
+  pullUps?: number;
+  absOneMinute?: number;
+  sitAndReachCm?: number;
+}>;
+type GtoFormState = Record<GtoMetricId, string>;
+type GtoMetric = Readonly<{
+  id: GtoMetricId;
+  label: string;
+  targetLabel: string;
+  targetValue: number;
+  unit: string;
+  better: 'lower' | 'higher';
+  inputMode: 'numeric' | 'decimal';
+  placeholder: string;
+  format: (value: number) => string;
+  parse: (value: string) => number | undefined;
+}>;
 
 const COMPLETION_STORAGE_KEY = 'project45.today.completions.v1';
+const GTO_STORAGE_KEY = 'project45.gto.weekly-tests.v1';
 
 const weekdayFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
@@ -92,6 +116,153 @@ const formatDistance = (meters: number): string => {
   }
 
   return `${meters} m`;
+};
+
+const formatRunTime = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
+};
+
+const parseRunTime = (value: string): number | undefined => {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  const timeMatch = trimmedValue.match(/^(\d{1,2}):(\d{2})$/);
+
+  if (timeMatch) {
+    const minutes = Number(timeMatch[1]);
+    const seconds = Number(timeMatch[2]);
+    return seconds < 60 ? minutes * 60 + seconds : undefined;
+  }
+
+  const numericMinutes = Number(trimmedValue.replace(',', '.'));
+  return Number.isFinite(numericMinutes) ? Math.round(numericMinutes * 60) : undefined;
+};
+
+const parseNumber = (value: string): number | undefined => {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  const parsedValue = Number(trimmedValue.replace(',', '.'));
+  return Number.isFinite(parsedValue) ? parsedValue : undefined;
+};
+
+const formatCount = (value: number): string => String(value);
+
+const formatCentimeters = (value: number): string => `${value > 0 ? '+' : ''}${value} cm`;
+
+const GTO_METRICS = [
+  {
+    id: 'run2KmSeconds',
+    label: '2 km run',
+    targetLabel: '10:00',
+    targetValue: 600,
+    unit: 'time',
+    better: 'lower',
+    inputMode: 'numeric',
+    placeholder: '10:00',
+    format: formatRunTime,
+    parse: parseRunTime,
+  },
+  {
+    id: 'pushUps',
+    label: 'Push-ups',
+    targetLabel: '30+',
+    targetValue: 30,
+    unit: 'reps',
+    better: 'higher',
+    inputMode: 'numeric',
+    placeholder: '30',
+    format: formatCount,
+    parse: parseNumber,
+  },
+  {
+    id: 'pullUps',
+    label: 'Pull-ups',
+    targetLabel: '9+',
+    targetValue: 9,
+    unit: 'reps',
+    better: 'higher',
+    inputMode: 'numeric',
+    placeholder: '9',
+    format: formatCount,
+    parse: parseNumber,
+  },
+  {
+    id: 'absOneMinute',
+    label: 'Abs in 1 minute',
+    targetLabel: '25+',
+    targetValue: 25,
+    unit: 'reps',
+    better: 'higher',
+    inputMode: 'numeric',
+    placeholder: '25',
+    format: formatCount,
+    parse: parseNumber,
+  },
+  {
+    id: 'sitAndReachCm',
+    label: 'Sit-and-reach',
+    targetLabel: '+9 cm',
+    targetValue: 9,
+    unit: 'cm',
+    better: 'higher',
+    inputMode: 'decimal',
+    placeholder: '+9',
+    format: formatCentimeters,
+    parse: parseNumber,
+  },
+] as const satisfies readonly GtoMetric[];
+
+const emptyGtoForm = (): GtoFormState => ({
+  run2KmSeconds: '',
+  pushUps: '',
+  pullUps: '',
+  absOneMinute: '',
+  sitAndReachCm: '',
+});
+
+const readGtoEntries = (): GtoEntry[] => {
+  try {
+    const stored = window.localStorage.getItem(GTO_STORAGE_KEY);
+
+    if (!stored) {
+      return [];
+    }
+
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed.filter((entry): entry is GtoEntry => typeof entry?.id === 'string') : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeGtoEntries = (entries: readonly GtoEntry[]): void => {
+  window.localStorage.setItem(GTO_STORAGE_KEY, JSON.stringify(entries));
+};
+
+const metricIsOnTarget = (metric: GtoMetric, value: number): boolean =>
+  metric.better === 'lower' ? value <= metric.targetValue : value >= metric.targetValue;
+
+const metricDeltaLabel = (metric: GtoMetric, value: number): string => {
+  const delta = value - metric.targetValue;
+
+  if (delta === 0) {
+    return 'At target';
+  }
+
+  if (metric.id === 'run2KmSeconds') {
+    return `${Math.abs(delta)}s ${delta < 0 ? 'faster' : 'over'}`;
+  }
+
+  return `${delta > 0 ? '+' : ''}${delta} ${metric.unit}`;
 };
 
 const formatDose = (prescription: ExercisePrescription): string => {
@@ -522,6 +693,129 @@ function ExerciseLibraryScreen() {
   );
 }
 
+function GtoScreen() {
+  const [entries, setEntries] = useState<GtoEntry[]>(() => readGtoEntries());
+  const [formState, setFormState] = useState<GtoFormState>(() => emptyGtoForm());
+  const todayKey = useMemo(() => formatDateKey(new Date()), []);
+  const latestEntry = entries[0];
+
+  useEffect(() => {
+    writeGtoEntries(entries);
+  }, [entries]);
+
+  const updateMetric = (metricId: GtoMetricId, value: string): void => {
+    setFormState((currentState) => ({
+      ...currentState,
+      [metricId]: value,
+    }));
+  };
+
+  const saveEntry = (event: React.FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+
+    const nextEntry: Record<string, string | number | undefined> = {
+      id: `${todayKey}-${Date.now()}`,
+      date: todayKey,
+    };
+
+    for (const metric of GTO_METRICS) {
+      nextEntry[metric.id] = metric.parse(formState[metric.id]);
+    }
+
+    const hasResult = GTO_METRICS.some((metric) => typeof nextEntry[metric.id] === 'number');
+
+    if (!hasResult) {
+      return;
+    }
+
+    setEntries((currentEntries) => [nextEntry as GtoEntry, ...currentEntries]);
+    setFormState(emptyGtoForm());
+  };
+
+  return (
+    <>
+      <header className="gto-header">
+        <p className="eyebrow">Tests</p>
+        <h1>GTO</h1>
+        <p className="gto-subtitle">Weekly Project45 targets</p>
+      </header>
+
+      <section className="gto-target-grid" aria-label="Latest GTO results">
+        {GTO_METRICS.map((metric) => {
+          const latestValue = latestEntry?.[metric.id];
+          const hasLatestValue = typeof latestValue === 'number';
+          const isOnTarget = hasLatestValue ? metricIsOnTarget(metric, latestValue) : false;
+
+          return (
+            <article className="gto-target-card" key={metric.id}>
+              <div>
+                <p>{metric.label}</p>
+                <h2>{hasLatestValue ? metric.format(latestValue) : 'No result'}</h2>
+              </div>
+              <dl>
+                <div>
+                  <dt>Target</dt>
+                  <dd>{metric.targetLabel}</dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd className={hasLatestValue && isOnTarget ? 'target-hit' : 'target-open'}>
+                    {hasLatestValue ? (isOnTarget ? 'On target' : metricDeltaLabel(metric, latestValue)) : 'Pending'}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+          );
+        })}
+      </section>
+
+      <form className="gto-entry-form" onSubmit={saveEntry}>
+        <div className="gto-form-heading">
+          <h2>New weekly entry</h2>
+          <span>{todayKey}</span>
+        </div>
+        <div className="gto-input-grid">
+          {GTO_METRICS.map((metric) => (
+            <label key={metric.id}>
+              <span>{metric.label}</span>
+              <input
+                inputMode={metric.inputMode}
+                onChange={(event) => updateMetric(metric.id, event.target.value)}
+                placeholder={metric.placeholder}
+                value={formState[metric.id]}
+              />
+            </label>
+          ))}
+        </div>
+        <button type="submit">Save entry</button>
+      </form>
+
+      <section className="gto-history" aria-label="GTO local entries">
+        <h2>Local entries</h2>
+        {entries.length === 0 ? (
+          <p>No entries stored yet.</p>
+        ) : (
+          <ul>
+            {entries.slice(0, 5).map((entry) => (
+              <li key={entry.id}>
+                <span>{entry.date}</span>
+                <p>
+                  {GTO_METRICS.map((metric) => {
+                    const value = entry[metric.id];
+                    return typeof value === 'number' ? `${metric.label}: ${metric.format(value)}` : null;
+                  })
+                    .filter(Boolean)
+                    .join(' - ')}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
 function App() {
   const [view, setView] = useState<AppView>('today');
 
@@ -534,12 +828,16 @@ function App() {
         <button aria-pressed={view === 'week'} onClick={() => setView('week')} type="button">
           Week
         </button>
+        <button aria-pressed={view === 'gto'} onClick={() => setView('gto')} type="button">
+          GTO
+        </button>
         <button aria-pressed={view === 'library'} onClick={() => setView('library')} type="button">
           Library
         </button>
       </nav>
       {view === 'today' ? <TodayScreen /> : null}
       {view === 'week' ? <WeekScreen /> : null}
+      {view === 'gto' ? <GtoScreen /> : null}
       {view === 'library' ? <ExerciseLibraryScreen /> : null}
     </main>
   );
