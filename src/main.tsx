@@ -3,13 +3,17 @@ import ReactDOM from 'react-dom/client';
 import {
   PROJECT45_EXERCISES,
   PROJECT45_WEEKLY_SEED_PLAN,
+  type EquipmentId,
   type ExercisePrescription,
+  type GoalId,
   type Project45Exercise,
   type WorkoutBlock,
   type WorkoutSession,
 } from './domain';
 import { completionId } from './completion/completionId';
 import './styles.css';
+
+type AppView = 'today' | 'library';
 
 const COMPLETION_STORAGE_KEY = 'project45.today.completions.v1';
 
@@ -20,6 +24,12 @@ const weekdayFormatter = new Intl.DateTimeFormat(undefined, {
 });
 
 const exerciseById = new Map(PROJECT45_EXERCISES.map((exercise) => [exercise.id, exercise]));
+
+const labelText = (value: string): string =>
+  value
+    .split(/[-_]/)
+    .map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
+    .join(' ');
 
 const resolveTrainingDay = (date: Date) => {
   const dayIndex = ((date.getDay() + 6) % 7) + 1;
@@ -111,7 +121,18 @@ const formatDose = (prescription: ExercisePrescription): string => {
   return doseParts.join(' - ');
 };
 
-function App() {
+const exerciseEquipment = (exercise: Project45Exercise): readonly EquipmentId[] =>
+  'optional' in exercise.equipment
+    ? [...exercise.equipment.required, ...exercise.equipment.optional]
+    : exercise.equipment.required;
+
+const exerciseHasGoal = (exercise: Project45Exercise, goal: GoalId): boolean =>
+  (exercise.goals as readonly GoalId[]).includes(goal);
+
+const exerciseHasEquipment = (exercise: Project45Exercise, equipment: EquipmentId): boolean =>
+  exerciseEquipment(exercise).includes(equipment);
+
+function TodayScreen() {
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => readCompletions());
   const today = useMemo(() => new Date(), []);
   const dateKey = formatDateKey(today);
@@ -158,7 +179,7 @@ function App() {
   };
 
   return (
-    <main className="app-shell">
+    <>
       <header className="today-header">
         <p className="eyebrow">Project45</p>
         <div className="header-row">
@@ -270,6 +291,129 @@ function App() {
           );
         })}
       </section>
+    </>
+  );
+}
+
+function ExerciseLibraryScreen() {
+  const [goalFilter, setGoalFilter] = useState<GoalId | 'all'>('all');
+  const [equipmentFilter, setEquipmentFilter] = useState<EquipmentId | 'all'>('all');
+  const goalOptions = useMemo<GoalId[]>(
+    () => [...new Set(PROJECT45_EXERCISES.flatMap((exercise) => exercise.goals as readonly GoalId[]))].sort(),
+    [],
+  );
+  const equipmentOptions = useMemo<EquipmentId[]>(
+    () => [...new Set(PROJECT45_EXERCISES.flatMap((exercise) => exerciseEquipment(exercise)))].sort(),
+    [],
+  );
+  const filteredExercises = PROJECT45_EXERCISES.filter((exercise) => {
+    const matchesGoal = goalFilter === 'all' || exerciseHasGoal(exercise, goalFilter);
+    const matchesEquipment = equipmentFilter === 'all' || exerciseHasEquipment(exercise, equipmentFilter);
+
+    return matchesGoal && matchesEquipment;
+  });
+
+  return (
+    <>
+      <header className="library-header">
+        <p className="eyebrow">Catalog</p>
+        <h1>Exercise Library</h1>
+        <p className="library-subtitle">
+          {filteredExercises.length} of {PROJECT45_EXERCISES.length} Project45 exercises
+        </p>
+        <div className="filter-grid" aria-label="Exercise filters">
+          <label>
+            <span>Goal</span>
+            <select value={goalFilter} onChange={(event) => setGoalFilter(event.target.value as GoalId | 'all')}>
+              <option value="all">All goals</option>
+              {goalOptions.map((goal) => (
+                <option key={goal} value={goal}>
+                  {labelText(goal)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Equipment</span>
+            <select
+              value={equipmentFilter}
+              onChange={(event) => setEquipmentFilter(event.target.value as EquipmentId | 'all')}
+            >
+              <option value="all">All equipment</option>
+              {equipmentOptions.map((equipment) => (
+                <option key={equipment} value={equipment}>
+                  {labelText(equipment)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </header>
+
+      <section className="exercise-library-list" aria-label="Exercise library">
+        {filteredExercises.map((exercise) => (
+          <article className="exercise-card" key={exercise.id}>
+            <div className="exercise-card-header">
+              <div>
+                <h2>{exercise.name}</h2>
+                <p>{exercise.summary}</p>
+              </div>
+              <span className={`risk-pill risk-${exercise.risk.level}`}>{exercise.risk.level}</span>
+            </div>
+
+            <dl className="exercise-meta-grid">
+              <div>
+                <dt>Goals</dt>
+                <dd>{exercise.goals.map(labelText).join(', ')}</dd>
+              </div>
+              <div>
+                <dt>Capabilities</dt>
+                <dd>{exercise.capabilities.map(labelText).join(', ')}</dd>
+              </div>
+              <div>
+                <dt>Equipment</dt>
+                <dd>{exerciseEquipment(exercise).map(labelText).join(', ')}</dd>
+              </div>
+            </dl>
+
+            <section className="exercise-detail-section">
+              <h3>Instructions</h3>
+              <ol>
+                {exercise.instructions.map((instruction) => (
+                  <li key={instruction}>{instruction}</li>
+                ))}
+              </ol>
+            </section>
+
+            <section className="exercise-detail-section">
+              <h3>Coaching Cues</h3>
+              <ul>
+                {exercise.coachingCues.map((cue) => (
+                  <li key={cue}>{cue}</li>
+                ))}
+              </ul>
+            </section>
+          </article>
+        ))}
+      </section>
+    </>
+  );
+}
+
+function App() {
+  const [view, setView] = useState<AppView>('today');
+
+  return (
+    <main className="app-shell">
+      <nav className="app-nav" aria-label="Primary">
+        <button aria-pressed={view === 'today'} onClick={() => setView('today')} type="button">
+          Today
+        </button>
+        <button aria-pressed={view === 'library'} onClick={() => setView('library')} type="button">
+          Library
+        </button>
+      </nav>
+      {view === 'today' ? <TodayScreen /> : <ExerciseLibraryScreen />}
     </main>
   );
 }
