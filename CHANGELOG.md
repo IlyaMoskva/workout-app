@@ -17,6 +17,7 @@ Added:
 - First typed 7-day Project45 weekly seed plan with home, gym, running-focused, endurance, and test sessions.
 - Today-first dashboard rendering the local-date training day from the Project45 weekly seed plan.
 - Local completion tracking for Today exercises with day and session progress.
+- Vitest setup with first domain and completion id unit tests.
 
 Changed:
 
