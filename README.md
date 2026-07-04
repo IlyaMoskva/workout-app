@@ -4,7 +4,7 @@ Project 45 is the next version of the workout app. The current goal is to evolve
 
 ## Current status
 
-This branch adds only the React infrastructure foundation.
+The React infrastructure is in place. The current branch starts the domain model with typed goals, capabilities, and exercises.
 
 The legacy `index.html` app is intentionally kept untouched. The new React app lives under `app/` and is used by Vite as the development/build root.
 
@@ -32,10 +32,27 @@ npm run build
 
 ```text
 app/                 React HTML entrypoint used by Vite
-src/                 React source code
+src/                 React source code and domain model
+src/domain/          Typed domain model
 .github/workflows/   CI workflow
 index.html           Legacy single-file workout app, kept for now
 ```
+
+## Domain model direction
+
+Project 45 will treat exercises as knowledge objects, not as UI rows.
+
+The first domain slice includes:
+
+- goals
+- capabilities
+- equipment ids
+- muscle groups
+- exercise risk levels
+- exercise metadata
+- coaching cues and substitutions
+
+Workout plans, progress, recovery, and real catalog data will come in separate focused PRs.
 
 ## Working agreement
 
@@ -47,7 +64,7 @@ index.html           Legacy single-file workout app, kept for now
 
 ## Next PRs
 
-1. Domain model: goals, capabilities, exercises, workouts, progress.
+1. Workout plan model.
 2. Project 45 exercise catalog and seed plan.
 3. Today-first MVP UI.
 4. Progress and recovery tracking.
