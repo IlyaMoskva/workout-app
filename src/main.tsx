@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import {
   PROJECT45_EXERCISES,
   PROJECT45_WEEKLY_SEED_PLAN,
   type ExercisePrescription,
   type Project45Exercise,
+  type WorkoutBlock,
+  type WorkoutSession,
 } from './domain';
 import './styles.css';
+
+const COMPLETION_STORAGE_KEY = 'project45.today.completions.v1';
 
 const weekdayFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
@@ -23,6 +27,40 @@ const resolveTrainingDay = (date: Date) => {
 
 const resolveExercise = (prescription: ExercisePrescription): Project45Exercise | undefined =>
   exerciseById.get(prescription.exerciseId);
+
+const formatDateKey = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+const completionId = (
+  dateKey: string,
+  session: WorkoutSession,
+  block: WorkoutBlock,
+  prescription: ExercisePrescription,
+): string => `${dateKey}:${session.id}:${block.id}:${prescription.exerciseId}`;
+
+const readCompletions = (): Set<string> => {
+  try {
+    const stored = window.localStorage.getItem(COMPLETION_STORAGE_KEY);
+
+    if (!stored) {
+      return new Set();
+    }
+
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? new Set(parsed.filter((value) => typeof value === 'string')) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const writeCompletions = (completionIds: Set<string>): void => {
+  window.localStorage.setItem(COMPLETION_STORAGE_KEY, JSON.stringify([...completionIds]));
+};
 
 const formatDuration = (seconds: number): string => {
   if (seconds < 60) {
@@ -76,16 +114,54 @@ const formatDose = (prescription: ExercisePrescription): string => {
     doseParts.push(`${formatDuration(prescription.restSeconds)} rest`);
   }
 
-  return doseParts.join(' · ');
+  return doseParts.join(' - ');
 };
 
 function App() {
-  const today = new Date();
+  const [completedIds, setCompletedIds] = useState<Set<string>>(() => readCompletions());
+  const today = useMemo(() => new Date(), []);
+  const dateKey = formatDateKey(today);
   const trainingDay = resolveTrainingDay(today);
   const totalMinutes = trainingDay.sessions.reduce(
     (minutes, session) => minutes + (session.estimatedDurationMinutes ?? 0),
     0,
   );
+  const totalPrescriptions = trainingDay.sessions.reduce(
+    (total, session) => total + session.blocks.reduce((blockTotal, block) => blockTotal + block.prescriptions.length, 0),
+    0,
+  );
+  const completedToday = trainingDay.sessions.reduce(
+    (total, session) =>
+      total +
+      session.blocks.reduce(
+        (blockTotal, block) =>
+          blockTotal +
+          block.prescriptions.filter((prescription) =>
+            completedIds.has(completionId(dateKey, session, block, prescription)),
+          ).length,
+        0,
+      ),
+    0,
+  );
+  const dayProgress = totalPrescriptions > 0 ? Math.round((completedToday / totalPrescriptions) * 100) : 0;
+
+  useEffect(() => {
+    writeCompletions(completedIds);
+  }, [completedIds]);
+
+  const toggleCompletion = (id: string): void => {
+    setCompletedIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+
+      if (nextIds.has(id)) {
+        nextIds.delete(id);
+      } else {
+        nextIds.add(id);
+      }
+
+      return nextIds;
+    });
+  };
 
   return (
     <main className="app-shell">
@@ -109,54 +185,96 @@ function App() {
             <dd>{totalMinutes} min</dd>
           </div>
           <div>
-            <dt>Plan</dt>
-            <dd>Weekly seed</dd>
+            <dt>Done</dt>
+            <dd>
+              {completedToday}/{totalPrescriptions}
+            </dd>
           </div>
         </dl>
+        <section className="day-progress" aria-label="Total day progress">
+          <div>
+            <span>Day progress</span>
+            <strong>{dayProgress}%</strong>
+          </div>
+          <progress value={completedToday} max={totalPrescriptions}>
+            {dayProgress}%
+          </progress>
+        </section>
       </header>
 
       <section className="session-list" aria-label="Today's sessions">
-        {trainingDay.sessions.map((session) => (
-          <article className="session-panel" key={session.id}>
-            <div className="session-heading">
-              <div>
-                <p className="session-meta">
-                  {session.location} · {session.estimatedDurationMinutes ?? 0} min · {session.type}
-                </p>
-                <h2>{session.title}</h2>
+        {trainingDay.sessions.map((session) => {
+          const sessionTotal = session.blocks.reduce((total, block) => total + block.prescriptions.length, 0);
+          const sessionDone = session.blocks.reduce(
+            (total, block) =>
+              total +
+              block.prescriptions.filter((prescription) =>
+                completedIds.has(completionId(dateKey, session, block, prescription)),
+              ).length,
+            0,
+          );
+
+          return (
+            <article className="session-panel" key={session.id}>
+              <div className="session-heading">
+                <div>
+                  <p className="session-meta">
+                    {session.location} - {session.estimatedDurationMinutes ?? 0} min - {session.type}
+                  </p>
+                  <h2>{session.title}</h2>
+                </div>
+                <div className="session-progress" aria-label={`${session.title} progress`}>
+                  <span>
+                    {sessionDone}/{sessionTotal} done
+                  </span>
+                  <progress value={sessionDone} max={sessionTotal}>
+                    {sessionDone} of {sessionTotal}
+                  </progress>
+                </div>
               </div>
-            </div>
 
-            <div className="block-list">
-              {session.blocks.map((block) => (
-                <section className="block-section" key={block.id}>
-                  <div className="block-heading">
-                    <p>{block.type}</p>
-                    <h3>{block.name}</h3>
-                  </div>
+              <div className="block-list">
+                {session.blocks.map((block) => (
+                  <section className="block-section" key={block.id}>
+                    <div className="block-heading">
+                      <p>{block.type}</p>
+                      <h3>{block.name}</h3>
+                    </div>
 
-                  <ul className="prescription-list">
-                    {block.prescriptions.map((prescription) => {
-                      const exercise = resolveExercise(prescription);
-                      const dose = formatDose(prescription);
-                      const cue = exercise?.coachingCues[0] ?? exercise?.summary ?? 'Catalog details pending.';
+                    <ul className="prescription-list">
+                      {block.prescriptions.map((prescription) => {
+                        const exercise = resolveExercise(prescription);
+                        const dose = formatDose(prescription);
+                        const cue = exercise?.coachingCues[0] ?? exercise?.summary ?? 'Catalog details pending.';
+                        const id = completionId(dateKey, session, block, prescription);
+                        const isDone = completedIds.has(id);
 
-                      return (
-                        <li className="prescription-row" key={`${block.id}-${prescription.exerciseId}`}>
-                          <div>
-                            <h4>{exercise?.name ?? prescription.exerciseId}</h4>
-                            <p>{cue}</p>
-                          </div>
-                          <span>{dose}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          </article>
-        ))}
+                        return (
+                          <li className="prescription-row" key={id}>
+                            <label className="completion-control">
+                              <input
+                                aria-label={`Mark ${exercise?.name ?? prescription.exerciseId} done`}
+                                checked={isDone}
+                                onChange={() => toggleCompletion(id)}
+                                type="checkbox"
+                              />
+                              <span>{isDone ? 'Done' : 'Mark done'}</span>
+                            </label>
+                            <div>
+                              <h4>{exercise?.name ?? prescription.exerciseId}</h4>
+                              <p>{cue}</p>
+                            </div>
+                            <span className="dose-pill">{dose}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            </article>
+          );
+        })}
       </section>
     </main>
   );

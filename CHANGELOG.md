@@ -16,6 +16,7 @@ Added:
 - First small typed Project45 exercise catalog covering GTO, core, hyperlordosis, pelvic floor, and endurance.
 - First typed 7-day Project45 weekly seed plan with home, gym, running-focused, endurance, and test sessions.
 - Today-first dashboard rendering the local-date training day from the Project45 weekly seed plan.
+- Local completion tracking for Today exercises with day and session progress.
 
 Changed:
 
