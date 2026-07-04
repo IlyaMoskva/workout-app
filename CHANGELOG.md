@@ -18,6 +18,7 @@ Added:
 - Today-first dashboard rendering the local-date training day from the Project45 weekly seed plan.
 - Local completion tracking for Today exercises with day and session progress.
 - Vitest setup with first domain and completion id unit tests.
+- Exercise Library screen with mobile-first catalog rendering and goal/equipment filters.
 
 Changed:
 
