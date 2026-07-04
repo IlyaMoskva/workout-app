@@ -14,6 +14,10 @@ Added:
 - Domain constants and readonly exercise metadata shapes for the model foundation.
 - Typed workout planning model for plans, training days, sessions, blocks, and exercise prescriptions.
 
+Changed:
+
+- Updated product naming and positioning to Project45.
+
 Notes:
 
 - The legacy `index.html` workout app is intentionally kept untouched.

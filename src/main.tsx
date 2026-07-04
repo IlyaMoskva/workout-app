@@ -6,10 +6,10 @@ function App() {
   return (
     <main className="app-shell">
       <section className="hero-card">
-        <p className="eyebrow">Project 45</p>
+        <p className="eyebrow">Project45</p>
         <h1>Human Performance OS</h1>
         <p>
-          Infrastructure foundation is ready. Domain model, workout planning, and Project 45 flows will come in focused follow-up PRs.
+          Project45 is the local-first training system for structured workout planning, exercise knowledge, and personal performance routines.
         </p>
       </section>
     </main>
