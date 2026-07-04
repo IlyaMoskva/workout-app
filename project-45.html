@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Project 45 · Конфигуратор тренировок</title>
+<style>
+:root{--bg:#0d0c0a;--card:#18160f;--elev:#221e15;--ink:#f4ecdc;--dim:#a39a85;--faint:#655d49;--accent:#d4a045;--good:#6fbf73;--warn:#d96440;--line:#2a251a}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:radial-gradient(ellipse at top,rgba(212,160,69,.08),transparent 45%),var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;font-size:16px;line-height:1.45}main{max-width:880px;margin:0 auto;padding:18px 18px 96px}.top{padding:18px 0 16px;border-bottom:1px solid var(--line);margin-bottom:18px}.kicker{color:var(--accent);font-size:11px;letter-spacing:.26em;text-transform:uppercase}.top h1{font-family:Georgia,serif;font-weight:400;font-style:italic;font-size:42px;line-height:.95;margin:10px 0 8px}.top p{color:var(--dim);margin:0}.tabs{position:sticky;top:0;z-index:3;background:rgba(13,12,10,.92);backdrop-filter:blur(10px);display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 0;margin-bottom:18px}.tab{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 8px;border-radius:8px;font-size:13px}.tab.active{border-color:var(--accent);color:var(--accent)}.view{display:none}.view.active{display:block}.grid{display:grid;gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}.card h2,.card h3{margin:0 0 8px;font-family:Georgia,serif;font-weight:400}.meta{color:var(--dim);font-size:13px}.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chip{border:1px solid var(--line);background:var(--elev);color:var(--dim);border-radius:999px;padding:5px 9px;font-size:12px}.chip.good{color:var(--good);border-color:rgba(111,191,115,.35)}.chip.warn{color:var(--warn);border-color:rgba(217,100,64,.35)}.day-card{margin-bottom:14px}.day-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:12px}.day-title{font-family:Georgia,serif;font-size:26px}.session{border-top:1px dashed var(--line);padding-top:12px;margin-top:12px}.session-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.session-title{font-weight:700}.session-time{color:var(--accent);font-size:12px;letter-spacing:.12em;text-transform:uppercase}.ex{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid rgba(255,255,255,.04)}.ex:first-of-type{border-top:none}.ex input{width:20px;height:20px;margin-top:2px}.ex-name{font-weight:650}.ex-dose{color:var(--dim);font-size:13px}.score{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.score .card{text-align:center}.score b{display:block;font-size:24px;color:var(--accent)}button{font:inherit}.btn{border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:8px;padding:9px 12px}.btn.fill{background:var(--accent);color:#15110a}.btn.small{font-size:12px;padding:6px 9px}.filters{display:flex;gap:8px;overflow:auto;padding-bottom:8px;margin-bottom:12px}.filter{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--dim);border-radius:999px;padding:8px 11px}.filter.active{border-color:var(--accent);color:var(--accent)}.builder-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}select,input[type=text],input[type=number]{width:100%;border:1px solid var(--line);background:var(--elev);color:var(--ink);border-radius:8px;padding:10px}.warnbox{border-left:3px solid var(--warn);background:rgba(217,100,64,.08);padding:12px;border-radius:8px;color:var(--ink)}.footerbar{position:fixed;left:0;right:0;bottom:0;background:rgba(13,12,10,.94);border-top:1px solid var(--line);padding:10px 18px;display:flex;justify-content:center}.footerbar .inner{max-width:880px;width:100%;display:flex;gap:8px}.footerbar button{flex:1}@media(min-width:720px){.score{grid-template-columns:repeat(4,1fr)}.days{grid-template-columns:repeat(2,1fr)}.top h1{font-size:56px}}
+</style>
+</head>
+<body>
+<main>
+<header class="top">
+  <div class="kicker">Project 45 · 8 недель</div>
+  <h1>ГТО, выносливость,<br>кор и потенция</h1>
+  <p>Конфигуратор нескольких тренировок в день: утро дома, микропаузa днём, вечер в зале.</p>
+</header>
+<nav class="tabs">
+  <button class="tab active" data-view="today">Сегодня</button>
+  <button class="tab" data-view="week">Неделя</button>
+  <button class="tab" data-view="library">Упражнения</button>
+  <button class="tab" data-view="builder">Сборка</button>
+</nav>
+<section id="today" class="view active"></section>
+<section id="week" class="view"></section>
+<section id="library" class="view"></section>
+<section id="builder" class="view"></section>
+</main>
+<div class="footerbar"><div class="inner"><button class="btn" onclick="resetChecks()">Сбросить отметки</button><button class="btn fill" onclick="showView('builder')">Настроить день</button></div></div>
+<script>
+const CATALOG={
+  pelvic_breath:{name:'Диафрагмальное дыхание + расслабление тазового дна',dose:'2–3 минуты',place:'home',tags:['pelvic','lordosis','recovery'],note:'На вдохе живот расширяется, тазовое дно расслабляется. Не зажимай мышцы постоянно.'},
+  kegel_slow:{name:'Кегель медленный',dose:'10×5–10 сек',place:'home',tags:['pelvic'],note:'Сжать как будто останавливаешь мочеиспускание. Потом полностью расслабить.'},
+  kegel_fast:{name:'Кегель быстрый',dose:'20 коротких сокращений',place:'home',tags:['pelvic'],note:'Без задержки дыхания и без напряжения ягодиц.'},
+  pelvic_tilt:{name:'Подкручивание таза лёжа',dose:'2×12',place:'home',tags:['lordosis','core'],note:'Прижми поясницу к полу, почувствуй контроль таза.'},
+  hip_flexor:{name:'Растяжка сгибателей бедра',dose:'2×45 сек/сторона',place:'home',tags:['lordosis','mobility'],note:'Таз подкручен, не прогибай поясницу.'},
+  glute_bridge:{name:'Ягодичный мостик',dose:'3×15',place:'home/gym',tags:['lordosis','pelvic','glutes'],note:'Подъём за счёт ягодиц, не поясницей.'},
+  dead_bug:{name:'Dead Bug',dose:'3×10/сторона',place:'home',tags:['core','lordosis'],note:'Поясница прижата к полу. Качество важнее количества.'},
+  bird_dog:{name:'Bird Dog',dose:'3×8/сторона',place:'home',tags:['core','lordosis'],note:'Не проворачивай таз. Медленно.'},
+  side_plank:{name:'Боковая планка',dose:'3×30–45 сек/сторона',place:'home/gym',tags:['core','lordosis'],note:'Тело одной линией.'},
+  ab_wheel:{name:'Ролик с коленей',dose:'3×5–10',place:'home',tags:['core','relief'],note:'Только короткая амплитуда, таз подкручен, без провала поясницы.'},
+  pushup:{name:'Отжимания ГТО',dose:'3×20 или тест максимум',place:'home/gym',tags:['gto','upper','relief'],note:'Ты уже делаешь 30+. Цель: 40–50 уверенно.'},
+  pullup:{name:'Подтягивания',dose:'5 подходов по 50–70% максимума',place:'gym',tags:['gto','upper','climbing'],note:'Не до отказа каждый раз. Цель: 10–12.'},
+  lat_pulldown:{name:'Тяга верхнего блока',dose:'4×8–12',place:'gym',tags:['upper','climbing'],note:'Лопатки вниз, локти к корпусу.'},
+  row:{name:'Тяга сидя/гантели в наклоне',dose:'4×10–12',place:'gym/home',tags:['upper','posture'],note:'Спина ровная, тяни локтями.'},
+  shoulder_press:{name:'Жим гантелей вверх',dose:'3×8–12',place:'gym/home',tags:['upper','relief'],note:'Не прогибай поясницу.'},
+  goblet_squat:{name:'Присед с гантелью у груди',dose:'3×10–12',place:'home/gym',tags:['legs','lordosis'],note:'Корпус собран, колени не валятся внутрь.'},
+  stepup:{name:'Подъём на платформу',dose:'3×10/нога',place:'gym',tags:['legs','endurance','hike'],note:'Супер для хайков и ГТО.'},
+  rdl:{name:'Румынская тяга',dose:'3×8–10',place:'gym',tags:['legs','posterior'],note:'Осторожно с поясницей. Таз назад, спина нейтрально.'},
+  calf:{name:'Икры',dose:'4×12–20',place:'gym/home',tags:['legs','relief'],note:'Полная амплитуда, пауза сверху.'},
+  run_intervals:{name:'Беговые интервалы',dose:'6×400 м @ 11.5–12.5 км/ч, отдых 2 мин',place:'gym/outdoor',tags:['gto','endurance'],note:'Ключ к 2 км за 10:00.'},
+  run_tempo:{name:'Темповый бег',dose:'2–3 км быстрее обычного',place:'gym/outdoor',tags:['gto','endurance'],note:'Постепенно приблизить темп к 5:00/км.'},
+  incline_walk:{name:'Дорожка с наклоном',dose:'45–60 мин',place:'gym',tags:['endurance','hike','recovery'],note:'Твоя база выносливости.'},
+  gto_abs:{name:'Поднимание туловища ГТО',dose:'1 мин тест или 3×20',place:'home/gym',tags:['gto','core'],note:'Цель: 30–35 за минуту с запасом.'},
+  sit_reach:{name:'Наклон вперёд ГТО',dose:'3×45 сек',place:'home/gym',tags:['gto','mobility'],note:'Задняя поверхность бедра + поясница без рывков.'},
+  micro_walk:{name:'Микропауза от компьютера',dose:'3–5 минут',place:'home',tags:['recovery','lordosis'],note:'Встать, пройтись, 10 подкручиваний таза стоя, 10 раскрытий грудного отдела.'}
+};
+const DEFAULT_PLAN=[
+ {id:'mon',name:'Понедельник',focus:'Ноги · лордоз · кор',sessions:[
+  {id:'mon-am',title:'Утро дома',time:'20–25 мин',ex:['pelvic_breath','pelvic_tilt','hip_flexor','glute_bridge','dead_bug','ab_wheel']},
+  {id:'mon-mid',title:'Дневная микропауза',time:'3–5 мин',ex:['micro_walk']},
+  {id:'mon-pm',title:'Вечер зал',time:'60–75 мин',ex:['goblet_squat','stepup','rdl','calf','gto_abs','sit_reach']}]},
+ {id:'tue',name:'Вторник',focus:'Бег ГТО · тазовое дно',sessions:[
+  {id:'tue-am',title:'Утро дома',time:'20 мин',ex:['pelvic_breath','kegel_slow','kegel_fast','bird_dog','side_plank']},
+  {id:'tue-mid',title:'Дневная микропауза',time:'3–5 мин',ex:['micro_walk']},
+  {id:'tue-pm',title:'Вечер скорость',time:'45–60 мин',ex:['run_intervals','pushup','sit_reach']}]},
+ {id:'wed',name:'Среда',focus:'Верх · подтягивания · скалодром',sessions:[
+  {id:'wed-am',title:'Утро дома',time:'20–25 мин',ex:['pelvic_breath','hip_flexor','dead_bug','ab_wheel','pushup']},
+  {id:'wed-mid',title:'Дневная микропауза',time:'3–5 мин',ex:['micro_walk']},
+  {id:'wed-pm',title:'Вечер зал/скалодром',time:'60–90 мин',ex:['pullup','lat_pulldown','row','shoulder_press','side_plank']}]},
+ {id:'thu',name:'Четверг',focus:'Восстановление · техника бега',sessions:[
+  {id:'thu-am',title:'Утро восстановление',time:'20 мин',ex:['pelvic_breath','pelvic_tilt','glute_bridge','bird_dog','sit_reach']},
+  {id:'thu-mid',title:'Дневная микропауза',time:'3–5 мин',ex:['micro_walk']},
+  {id:'thu-pm',title:'Лёгкий вечер',time:'30–45 мин',ex:['incline_walk','hip_flexor']}]},
+ {id:'fri',name:'Пятница',focus:'Верх · кор · рельеф',sessions:[
+  {id:'fri-am',title:'Утро дома',time:'20–25 мин',ex:['pelvic_breath','kegel_slow','kegel_fast','dead_bug','ab_wheel']},
+  {id:'fri-mid',title:'Дневная микропауза',time:'3–5 мин',ex:['micro_walk']},
+  {id:'fri-pm',title:'Вечер зал',time:'60–75 мин',ex:['pullup','row','shoulder_press','pushup','gto_abs','side_plank']}]},
+ {id:'sat',name:'Суббота',focus:'Длинная выносливость · хайк',sessions:[
+  {id:'sat-am',title:'Перед выходом',time:'10–15 мин',ex:['pelvic_breath','hip_flexor','glute_bridge']},
+  {id:'sat-pm',title:'Хайк/длинное кардио',time:'60+ мин',ex:['incline_walk','sit_reach']}]},
+ {id:'sun',name:'Воскресенье',focus:'Контрольные тесты · отдых',sessions:[
+  {id:'sun-am',title:'Тесты раз в неделю',time:'30–40 мин',ex:['pushup','pullup','gto_abs','sit_reach','run_tempo']},
+  {id:'sun-pm',title:'Восстановление',time:'15 мин',ex:['pelvic_breath','hip_flexor','micro_walk']}]}];
+let plan=JSON.parse(localStorage.getItem('p45.plan')||'null')||DEFAULT_PLAN;
+let checks=JSON.parse(localStorage.getItem('p45.checks')||'{}');
+function save(){localStorage.setItem('p45.plan',JSON.stringify(plan));localStorage.setItem('p45.checks',JSON.stringify(checks));}
+function todayIndex(){let d=new Date().getDay();return d===0?6:d-1}
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===id));render();scrollTo(0,0)}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>showView(t.dataset.view));
+function exHtml(exId,sessionId){let ex=CATALOG[exId];if(!ex)return'';let key=sessionId+'.'+exId;return `<label class="ex"><input type="checkbox" ${checks[key]?'checked':''} onchange="checks['${key}']=this.checked;save();renderTodayScore()"><div><div class="ex-name">${ex.name}</div><div class="ex-dose">${ex.dose}</div><div class="chips">${ex.tags.map(tag=>`<span class="chip">${tag}</span>`).join('')}</div><div class="meta" style="margin-top:6px">${ex.note}</div></div><div class="meta">${ex.place}</div></label>`}
+function sessionHtml(s){return `<div class="session"><div class="session-head"><div><div class="session-title">${s.title}</div><div class="meta">${s.time}</div></div><div class="session-time">${s.ex.length} упр.</div></div>${s.ex.map(id=>exHtml(id,s.id)).join('')}</div>`}
+function dayHtml(day){return `<article class="card day-card"><div class="day-head"><div><div class="day-title">${day.name}</div><div class="meta">${day.focus}</div></div><button class="btn small" onclick="openBuilder('${day.id}')">Изменить</button></div>${day.sessions.map(sessionHtml).join('')}</article>`}
+function renderToday(){let day=plan[todayIndex()];document.getElementById('today').innerHTML=`<div class="score" id="score"></div><div class="warnbox" style="margin:12px 0">Главный риск: перебрать нагрузку. Если сон, либидо или утренние эрекции падают 3–4 дня подряд — уменьшаем объём, а не геройствуем.</div>${dayHtml(day)}`;renderTodayScore()}
+function renderTodayScore(){let score=document.getElementById('score');if(!score)return;let day=plan[todayIndex()];let all=day.sessions.flatMap(s=>s.ex.map(e=>s.id+'.'+e));let done=all.filter(k=>checks[k]).length;let pct=all.length?Math.round(done*100/all.length):0;score.innerHTML=`<div class="card"><b>${pct}%</b><span class="meta">сегодня</span></div><div class="card"><b>${done}/${all.length}</b><span class="meta">упражнений</span></div><div class="card"><b>8</b><span class="meta">недель</span></div><div class="card"><b>ГТО</b><span class="meta">главная цель</span></div>`}
+function renderWeek(){document.getElementById('week').innerHTML=`<div class="grid days">${plan.map(dayHtml).join('')}</div>`}
+let activeTag='all';function renderLibrary(){let tags=['all',...new Set(Object.values(CATALOG).flatMap(e=>e.tags))];let list=Object.entries(CATALOG).filter(([_,e])=>activeTag==='all'||e.tags.includes(activeTag));document.getElementById('library').innerHTML=`<div class="filters">${tags.map(t=>`<button class="filter ${t===activeTag?'active':''}" onclick="activeTag='${t}';renderLibrary()">${t}</button>`).join('')}</div><div class="grid">${list.map(([id,e])=>`<div class="card"><h3>${e.name}</h3><div class="meta">${e.dose} · ${e.place}</div><div class="chips">${e.tags.map(t=>`<span class="chip">${t}</span>`).join('')}</div><p class="meta">${e.note}</p><button class="btn small" onclick="quickAdd('${id}')">Добавить в день</button></div>`).join('')}</div>`}
+let builderDayId=plan[todayIndex()].id;function openBuilder(dayId){builderDayId=dayId;showView('builder')}function renderBuilder(){let day=plan.find(d=>d.id===builderDayId)||plan[0];document.getElementById('builder').innerHTML=`<div class="card"><h2>Конфигуратор</h2><div class="meta">Выбери день и добавляй упражнения в нужную сессию.</div><div class="builder-row"><select onchange="builderDayId=this.value;renderBuilder()">${plan.map(d=>`<option value="${d.id}" ${d.id===day.id?'selected':''}>${d.name}</option>`).join('')}</select><button class="btn" onclick="restoreDefault()">Сброс плана</button></div></div><div class="card"><h3>${day.name}</h3>${day.sessions.map(s=>`<div class="session"><div class="session-head"><div><div class="session-title">${s.title}</div><div class="meta">${s.time}</div></div></div>${s.ex.map(id=>`<div class="ex"><div></div><div><div class="ex-name">${CATALOG[id]?.name||id}</div><div class="ex-dose">${CATALOG[id]?.dose||''}</div></div><button class="btn small" onclick="removeEx('${day.id}','${s.id}','${id}')">−</button></div>`).join('')}<div class="builder-row"><select id="add-${s.id}">${Object.entries(CATALOG).map(([id,e])=>`<option value="${id}">${e.name}</option>`).join('')}</select><button class="btn fill" onclick="addEx('${day.id}','${s.id}',document.getElementById('add-${s.id}').value)">+</button></div></div>`).join('')}</div>`}
+function addEx(dayId,sessionId,exId){let s=plan.find(d=>d.id===dayId).sessions.find(s=>s.id===sessionId);s.ex.push(exId);save();renderBuilder()}function removeEx(dayId,sessionId,exId){let s=plan.find(d=>d.id===dayId).sessions.find(s=>s.id===sessionId);let i=s.ex.indexOf(exId);if(i>=0)s.ex.splice(i,1);save();renderBuilder()}function quickAdd(exId){builderDayId=plan[todayIndex()].id;let day=plan.find(d=>d.id===builderDayId);day.sessions[0].ex.push(exId);save();showView('builder')}function restoreDefault(){if(confirm('Вернуть базовый Project 45 план?')){plan=JSON.parse(JSON.stringify(DEFAULT_PLAN));checks={};save();render()}}function resetChecks(){checks={};save();render()}function render(){let id=document.querySelector('.view.active').id;if(id==='today')renderToday();if(id==='week')renderWeek();if(id==='library')renderLibrary();if(id==='builder')renderBuilder()}render();
+</script>
+</body>
+</html>
