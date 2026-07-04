@@ -21,6 +21,7 @@ Added:
 - Exercise Library screen with mobile-first catalog rendering and goal/equipment filters.
 - Week screen rendering all Project45 seed-plan days with current-day highlight and completion summaries.
 - Local GTO weekly test tracking with latest results compared against Project45 targets.
+- Daily recovery check-in with local tracking, latest entry display, and recent low-recovery warning.
 
 Changed:
 
