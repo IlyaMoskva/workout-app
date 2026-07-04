@@ -11,6 +11,7 @@ Added:
 - Pull request template.
 - README with setup and working agreement.
 - Initial domain types for goals, capabilities, exercises, equipment, muscle groups, and risk levels.
+- Domain constants and readonly exercise metadata shapes for the model foundation.
 
 Notes:
 
