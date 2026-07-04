@@ -14,8 +14,9 @@ import {
 import { completionId } from './completion/completionId';
 import './styles.css';
 
-type AppView = 'today' | 'week' | 'gto' | 'library';
+type AppView = 'today' | 'week' | 'recovery' | 'gto' | 'library';
 type GtoMetricId = 'run2KmSeconds' | 'pushUps' | 'pullUps' | 'absOneMinute' | 'sitAndReachCm';
+type RecoveryMetricId = 'sleepHours' | 'energy' | 'soreness' | 'stress' | 'libido' | 'readiness';
 type GtoEntry = Readonly<{
   id: string;
   date: string;
@@ -25,7 +26,18 @@ type GtoEntry = Readonly<{
   absOneMinute?: number;
   sitAndReachCm?: number;
 }>;
+type RecoveryEntry = Readonly<{
+  id: string;
+  date: string;
+  sleepHours: number;
+  energy: number;
+  soreness: number;
+  stress: number;
+  libido?: number;
+  readiness?: number;
+}>;
 type GtoFormState = Record<GtoMetricId, string>;
+type RecoveryFormState = Record<RecoveryMetricId, string>;
 type GtoMetric = Readonly<{
   id: GtoMetricId;
   label: string;
@@ -41,6 +53,7 @@ type GtoMetric = Readonly<{
 
 const COMPLETION_STORAGE_KEY = 'project45.today.completions.v1';
 const GTO_STORAGE_KEY = 'project45.gto.weekly-tests.v1';
+const RECOVERY_STORAGE_KEY = 'project45.recovery.daily-check-ins.v1';
 
 const weekdayFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
@@ -229,6 +242,15 @@ const emptyGtoForm = (): GtoFormState => ({
   sitAndReachCm: '',
 });
 
+const emptyRecoveryForm = (): RecoveryFormState => ({
+  sleepHours: '',
+  energy: '',
+  soreness: '',
+  stress: '',
+  libido: '',
+  readiness: '',
+});
+
 const readGtoEntries = (): GtoEntry[] => {
   try {
     const stored = window.localStorage.getItem(GTO_STORAGE_KEY);
@@ -246,6 +268,61 @@ const readGtoEntries = (): GtoEntry[] => {
 
 const writeGtoEntries = (entries: readonly GtoEntry[]): void => {
   window.localStorage.setItem(GTO_STORAGE_KEY, JSON.stringify(entries));
+};
+
+const isRecoveryEntry = (entry: unknown): entry is RecoveryEntry => {
+  if (!entry || typeof entry !== 'object') {
+    return false;
+  }
+
+  const candidate = entry as Partial<RecoveryEntry>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.date === 'string' &&
+    typeof candidate.sleepHours === 'number' &&
+    typeof candidate.energy === 'number' &&
+    typeof candidate.soreness === 'number' &&
+    typeof candidate.stress === 'number'
+  );
+};
+
+const readRecoveryEntries = (): RecoveryEntry[] => {
+  try {
+    const stored = window.localStorage.getItem(RECOVERY_STORAGE_KEY);
+
+    if (!stored) {
+      return [];
+    }
+
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed.filter(isRecoveryEntry) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeRecoveryEntries = (entries: readonly RecoveryEntry[]): void => {
+  window.localStorage.setItem(RECOVERY_STORAGE_KEY, JSON.stringify(entries));
+};
+
+const recoveryEntryIsPoor = (entry: RecoveryEntry): boolean => {
+  const readinessIsLow = typeof entry.readiness === 'number' && entry.readiness <= 2;
+  return entry.sleepHours < 6 || entry.energy <= 2 || entry.soreness >= 4 || entry.stress >= 4 || readinessIsLow;
+};
+
+const poorRecoveryWarning = (entries: readonly RecoveryEntry[]): string | undefined => {
+  const recentEntries = entries.slice(0, 3);
+  const poorCount = recentEntries.filter(recoveryEntryIsPoor).length;
+
+  if (poorCount >= 3) {
+    return 'Recovery has been low for 3 recent check-ins.';
+  }
+
+  if (poorCount >= 2) {
+    return 'Recovery has been low for 2 recent check-ins.';
+  }
+
+  return undefined;
 };
 
 const metricIsOnTarget = (metric: GtoMetric, value: number): boolean =>
@@ -816,6 +893,191 @@ function GtoScreen() {
   );
 }
 
+function RecoveryScreen() {
+  const [entries, setEntries] = useState<RecoveryEntry[]>(() => readRecoveryEntries());
+  const [formState, setFormState] = useState<RecoveryFormState>(() => emptyRecoveryForm());
+  const todayKey = useMemo(() => formatDateKey(new Date()), []);
+  const latestEntry = entries[0];
+  const warning = poorRecoveryWarning(entries);
+
+  useEffect(() => {
+    writeRecoveryEntries(entries);
+  }, [entries]);
+
+  const updateMetric = (metricId: RecoveryMetricId, value: string): void => {
+    setFormState((currentState) => ({
+      ...currentState,
+      [metricId]: value,
+    }));
+  };
+
+  const saveEntry = (event: React.FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+
+    const sleepHours = parseNumber(formState.sleepHours);
+    const energy = parseNumber(formState.energy);
+    const soreness = parseNumber(formState.soreness);
+    const stress = parseNumber(formState.stress);
+
+    if (
+      typeof sleepHours !== 'number' ||
+      typeof energy !== 'number' ||
+      typeof soreness !== 'number' ||
+      typeof stress !== 'number'
+    ) {
+      return;
+    }
+
+    const libido = parseNumber(formState.libido);
+    const readiness = parseNumber(formState.readiness);
+    const nextEntry: RecoveryEntry = {
+      id: `${todayKey}-${Date.now()}`,
+      date: todayKey,
+      sleepHours,
+      energy,
+      soreness,
+      stress,
+      ...(typeof libido === 'number' ? { libido } : {}),
+      ...(typeof readiness === 'number' ? { readiness } : {}),
+    };
+
+    setEntries((currentEntries) => [nextEntry, ...currentEntries]);
+    setFormState(emptyRecoveryForm());
+  };
+
+  return (
+    <>
+      <header className="recovery-header">
+        <p className="eyebrow">Check-in</p>
+        <h1>Recovery</h1>
+        <p className="recovery-subtitle">Daily local readiness log</p>
+      </header>
+
+      {warning ? <section className="recovery-warning">{warning}</section> : null}
+
+      <section className="recovery-latest" aria-label="Latest recovery entry">
+        <div className="recovery-section-heading">
+          <h2>Latest entry</h2>
+          <span>{latestEntry?.date ?? 'No entry yet'}</span>
+        </div>
+        {latestEntry ? (
+          <dl className="recovery-metric-grid">
+            <div>
+              <dt>Sleep</dt>
+              <dd>{latestEntry.sleepHours}h</dd>
+            </div>
+            <div>
+              <dt>Energy</dt>
+              <dd>{latestEntry.energy}/5</dd>
+            </div>
+            <div>
+              <dt>Soreness</dt>
+              <dd>{latestEntry.soreness}/5</dd>
+            </div>
+            <div>
+              <dt>Stress</dt>
+              <dd>{latestEntry.stress}/5</dd>
+            </div>
+            <div>
+              <dt>Libido</dt>
+              <dd>{typeof latestEntry.libido === 'number' ? `${latestEntry.libido}/5` : 'Optional'}</dd>
+            </div>
+            <div>
+              <dt>Readiness</dt>
+              <dd>{typeof latestEntry.readiness === 'number' ? `${latestEntry.readiness}/5` : 'Optional'}</dd>
+            </div>
+          </dl>
+        ) : (
+          <p>No recovery check-ins stored yet.</p>
+        )}
+      </section>
+
+      <form className="recovery-form" onSubmit={saveEntry}>
+        <div className="recovery-section-heading">
+          <h2>Today</h2>
+          <span>{todayKey}</span>
+        </div>
+        <div className="recovery-input-grid">
+          <label>
+            <span>Sleep hours</span>
+            <input
+              inputMode="decimal"
+              onChange={(event) => updateMetric('sleepHours', event.target.value)}
+              placeholder="7.5"
+              value={formState.sleepHours}
+            />
+          </label>
+          <label>
+            <span>Energy 1-5</span>
+            <input
+              inputMode="numeric"
+              onChange={(event) => updateMetric('energy', event.target.value)}
+              placeholder="4"
+              value={formState.energy}
+            />
+          </label>
+          <label>
+            <span>Soreness 1-5</span>
+            <input
+              inputMode="numeric"
+              onChange={(event) => updateMetric('soreness', event.target.value)}
+              placeholder="2"
+              value={formState.soreness}
+            />
+          </label>
+          <label>
+            <span>Stress 1-5</span>
+            <input
+              inputMode="numeric"
+              onChange={(event) => updateMetric('stress', event.target.value)}
+              placeholder="2"
+              value={formState.stress}
+            />
+          </label>
+          <label>
+            <span>Libido 1-5 optional</span>
+            <input
+              inputMode="numeric"
+              onChange={(event) => updateMetric('libido', event.target.value)}
+              placeholder="Optional"
+              value={formState.libido}
+            />
+          </label>
+          <label>
+            <span>Morning readiness 1-5 optional</span>
+            <input
+              inputMode="numeric"
+              onChange={(event) => updateMetric('readiness', event.target.value)}
+              placeholder="Optional"
+              value={formState.readiness}
+            />
+          </label>
+        </div>
+        <button type="submit">Save check-in</button>
+      </form>
+
+      <section className="recovery-history" aria-label="Recovery local entries">
+        <h2>Recent check-ins</h2>
+        {entries.length === 0 ? (
+          <p>No entries stored yet.</p>
+        ) : (
+          <ul>
+            {entries.slice(0, 5).map((entry) => (
+              <li key={entry.id}>
+                <span>{entry.date}</span>
+                <p>
+                  {entry.sleepHours}h sleep - Energy {entry.energy}/5 - Soreness {entry.soreness}/5 - Stress{' '}
+                  {entry.stress}/5
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
 function App() {
   const [view, setView] = useState<AppView>('today');
 
@@ -828,6 +1090,9 @@ function App() {
         <button aria-pressed={view === 'week'} onClick={() => setView('week')} type="button">
           Week
         </button>
+        <button aria-pressed={view === 'recovery'} onClick={() => setView('recovery')} type="button">
+          Recovery
+        </button>
         <button aria-pressed={view === 'gto'} onClick={() => setView('gto')} type="button">
           GTO
         </button>
@@ -837,6 +1102,7 @@ function App() {
       </nav>
       {view === 'today' ? <TodayScreen /> : null}
       {view === 'week' ? <WeekScreen /> : null}
+      {view === 'recovery' ? <RecoveryScreen /> : null}
       {view === 'gto' ? <GtoScreen /> : null}
       {view === 'library' ? <ExerciseLibraryScreen /> : null}
     </main>
