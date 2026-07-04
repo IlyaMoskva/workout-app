@@ -15,3 +15,5 @@ export type {
 } from './workout.types';
 
 export { BLOCK_TYPES, LOCATION_TYPES, SESSION_TYPES } from './workout.types';
+export type { Project45WeeklySeedPlan } from './weeklySeedPlan';
+export { PROJECT45_WEEKLY_SEED_PLAN } from './weeklySeedPlan';
