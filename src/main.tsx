@@ -417,6 +417,28 @@ const completedPrescriptionCount = (dateKey: string, trainingDay: TrainingDay, c
     0,
   );
 
+const sessionPrescriptionIds = (dateKey: string, session: WorkoutSession): string[] =>
+  session.blocks.flatMap((block) =>
+    block.prescriptions.map((prescription) => completionId(dateKey, session, block, prescription)),
+  );
+
+const sessionPrescriptionCount = (session: WorkoutSession): number =>
+  session.blocks.reduce((total, block) => total + block.prescriptions.length, 0);
+
+const completedSessionPrescriptionCount = (
+  dateKey: string,
+  session: WorkoutSession,
+  completedIds: Set<string>,
+): number =>
+  session.blocks.reduce(
+    (total, block) =>
+      total +
+      block.prescriptions.filter((prescription) =>
+        completedIds.has(completionId(dateKey, session, block, prescription)),
+      ).length,
+    0,
+  );
+
 function TodayScreen() {
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => readCompletions());
   const today = useMemo(() => new Date(), []);
@@ -429,6 +451,20 @@ function TodayScreen() {
   const totalPrescriptions = trainingDayPrescriptionCount(trainingDay);
   const completedToday = completedPrescriptionCount(dateKey, trainingDay, completedIds);
   const dayProgress = totalPrescriptions > 0 ? Math.round((completedToday / totalPrescriptions) * 100) : 0;
+  const remainingToday = Math.max(totalPrescriptions - completedToday, 0);
+  const dayIsComplete = totalPrescriptions > 0 && completedToday === totalPrescriptions;
+  const nextPrescription = trainingDay.sessions
+    .flatMap((session) =>
+      session.blocks.flatMap((block) =>
+        block.prescriptions.map((prescription) => ({
+          block,
+          exercise: resolveExercise(prescription),
+          id: completionId(dateKey, session, block, prescription),
+          session,
+        })),
+      ),
+    )
+    .find((item) => !completedIds.has(item.id));
 
   useEffect(() => {
     writeCompletions(completedIds);
@@ -448,6 +484,24 @@ function TodayScreen() {
     });
   };
 
+  const setSessionCompletion = (session: WorkoutSession, shouldComplete: boolean): void => {
+    const ids = sessionPrescriptionIds(dateKey, session);
+
+    setCompletedIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+
+      for (const id of ids) {
+        if (shouldComplete) {
+          nextIds.add(id);
+        } else {
+          nextIds.delete(id);
+        }
+      }
+
+      return nextIds;
+    });
+  };
+
   return (
     <>
       <header className="today-header">
@@ -460,6 +514,16 @@ function TodayScreen() {
           <div className="day-pill">Day {trainingDay.dayIndex}</div>
         </div>
         <p className="day-title">{trainingDay.title}</p>
+        <section className={`today-command${dayIsComplete ? ' is-complete' : ''}`} aria-label="Today progress">
+          <div className="today-progress-ring" aria-hidden="true">
+            {dayProgress}%
+          </div>
+          <div className="today-command-copy">
+            <p>{dayIsComplete ? 'Day complete' : `${remainingToday} item${remainingToday === 1 ? '' : 's'} left`}</p>
+            <h2>{nextPrescription ? `Next: ${nextPrescription.exercise?.name ?? nextPrescription.id}` : 'Everything is done'}</h2>
+            <span>{nextPrescription ? `${nextPrescription.session.title} - ${nextPrescription.block.name}` : 'Nice work today.'}</span>
+          </div>
+        </section>
         <dl className="summary-strip">
           <div>
             <dt>Sessions</dt>
@@ -476,31 +540,17 @@ function TodayScreen() {
             </dd>
           </div>
         </dl>
-        <section className="day-progress" aria-label="Total day progress">
-          <div>
-            <span>Day progress</span>
-            <strong>{dayProgress}%</strong>
-          </div>
-          <progress value={completedToday} max={totalPrescriptions}>
-            {dayProgress}%
-          </progress>
-        </section>
       </header>
 
       <section className="session-list" aria-label="Today's sessions">
         {trainingDay.sessions.map((session) => {
-          const sessionTotal = session.blocks.reduce((total, block) => total + block.prescriptions.length, 0);
-          const sessionDone = session.blocks.reduce(
-            (total, block) =>
-              total +
-              block.prescriptions.filter((prescription) =>
-                completedIds.has(completionId(dateKey, session, block, prescription)),
-              ).length,
-            0,
-          );
+          const sessionTotal = sessionPrescriptionCount(session);
+          const sessionDone = completedSessionPrescriptionCount(dateKey, session, completedIds);
+          const sessionProgress = sessionTotal > 0 ? Math.round((sessionDone / sessionTotal) * 100) : 0;
+          const sessionIsComplete = sessionTotal > 0 && sessionDone === sessionTotal;
 
           return (
-            <article className="session-panel" key={session.id}>
+            <article className={`session-panel${sessionIsComplete ? ' is-complete' : ''}`} key={session.id}>
               <div className="session-heading">
                 <div>
                   <p className="session-meta">
@@ -509,13 +559,22 @@ function TodayScreen() {
                   <h2>{session.title}</h2>
                 </div>
                 <div className="session-progress" aria-label={`${session.title} progress`}>
-                  <span>
-                    {sessionDone}/{sessionTotal} done
-                  </span>
+                  <span>{sessionProgress}%</span>
                   <progress value={sessionDone} max={sessionTotal}>
                     {sessionDone} of {sessionTotal}
                   </progress>
+                  <strong>
+                    {sessionDone}/{sessionTotal} done
+                  </strong>
                 </div>
+              </div>
+              <div className="session-actions">
+                <button
+                  onClick={() => setSessionCompletion(session, !sessionIsComplete)}
+                  type="button"
+                >
+                  {sessionIsComplete ? 'Clear session' : 'Mark session done'}
+                </button>
               </div>
 
               <div className="block-list">
@@ -535,7 +594,7 @@ function TodayScreen() {
                         const isDone = completedIds.has(id);
 
                         return (
-                          <li className="prescription-row" key={id}>
+                          <li className={`prescription-row${isDone ? ' is-done' : ''}`} key={id}>
                             <label className="completion-control">
                               <input
                                 aria-label={`Mark ${exercise?.name ?? prescription.exerciseId} done`}
@@ -543,7 +602,7 @@ function TodayScreen() {
                                 onChange={() => toggleCompletion(id)}
                                 type="checkbox"
                               />
-                              <span>{isDone ? 'Done' : 'Mark done'}</span>
+                              <span>{isDone ? 'Done' : 'Tap when done'}</span>
                             </label>
                             <div>
                               <h4>{exercise?.name ?? prescription.exerciseId}</h4>
