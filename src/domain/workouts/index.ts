@@ -16,6 +16,22 @@ export type {
 
 export { BLOCK_TYPES, LOCATION_TYPES, SESSION_TYPES } from './workout.types';
 export type {
+  WorkoutLifecycleFailure,
+  WorkoutLifecycleResult,
+  WorkoutLifecycleState,
+  WorkoutLifecycleSuccess,
+  WorkoutLifecycleTransition,
+} from './lifecycle';
+export {
+  WORKOUT_LIFECYCLE_STATES,
+  WORKOUT_LIFECYCLE_TRANSITIONS,
+  complete,
+  pause,
+  resume,
+  skip,
+  start,
+} from './lifecycle';
+export type {
   ConstraintEvaluationInput,
   ConstraintOutcome,
   ConstraintResult,

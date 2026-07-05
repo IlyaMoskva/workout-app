@@ -23,6 +23,7 @@ Added:
 - Local GTO weekly test tracking with latest results compared against Project45 targets.
 - Daily recovery check-in with local tracking, latest entry display, and recent low-recovery warning.
 - Pure TypeScript event model for workout, exercise, recovery, weight, goal, and GTO test history foundations.
+- Deterministic pure TypeScript workout lifecycle state transitions for planned, started, paused, completed, and skipped workouts.
 
 Changed:
 
