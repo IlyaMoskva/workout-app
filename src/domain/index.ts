@@ -39,7 +39,11 @@ export type {
   WorkoutSessionId,
 } from './workouts';
 export type {
+  ConstraintEvaluationInput,
+  ConstraintOutcome,
+  ConstraintResult,
   Planner,
+  PlanningConstraint,
   PlanningConstraints,
   PlanningContext,
   PlanningRecoveryData,
@@ -62,6 +66,7 @@ export {
   LOCATION_TYPES,
   PROJECT45_WEEKLY_SEED_PLAN,
   SESSION_TYPES,
+  evaluatePlanningConstraint,
   STARTER_PLANNING_RULES,
   avoidBackToBackHardRunningDaysRule,
   avoidHeavyLowerBodyAfterRunningIntervalsRule,
@@ -70,6 +75,7 @@ export {
   flagPoorRecoveryRule,
   planProject45Week,
   project45SeedPlanner,
+  resolveExerciseSubstitutions,
   runPlanningRules,
   SCORE_DIMENSIONS,
   scoreTrainingDay,
