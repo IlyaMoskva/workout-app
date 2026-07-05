@@ -55,6 +55,8 @@ The first domain slice includes:
 
 Workout generation, progress, recovery, and real catalog data will come in separate focused PRs.
 
+For the broader system design, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Working agreement
 
 - Small PRs.

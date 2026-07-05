@@ -24,6 +24,7 @@ Added:
 - Daily recovery check-in with local tracking, latest entry display, and recent low-recovery warning.
 - Pure TypeScript event model for workout, exercise, recovery, weight, goal, and GTO test history foundations.
 - Deterministic pure TypeScript workout lifecycle state transitions for planned, started, paused, completed, and skipped workouts.
+- Staff-level Project45 architecture document covering domain, engines, events, plugins, local-first design, tests, and roadmap.
 
 Changed:
 
