@@ -16,6 +16,16 @@ export type {
 
 export { BLOCK_TYPES, LOCATION_TYPES, SESSION_TYPES } from './workout.types';
 export type {
+  ConstraintEvaluationInput,
+  ConstraintOutcome,
+  ConstraintResult,
+  PlanningConstraint,
+} from './constraints';
+export {
+  evaluatePlanningConstraint,
+  resolveExerciseSubstitutions,
+} from './constraints';
+export type {
   Planner,
   PlanningConstraints,
   PlanningContext,
