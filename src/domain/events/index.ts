@@ -1,0 +1,15 @@
+export type {
+  AggregateId,
+  Event,
+  EventId,
+  EventMetadata,
+  EventVersion,
+  ExerciseCompleted,
+  GoalChanged,
+  GtoTestRecorded,
+  Project45Event,
+  RecoveryRecorded,
+  WeightRecorded,
+  WorkoutCompleted,
+  WorkoutStarted,
+} from './event.types';

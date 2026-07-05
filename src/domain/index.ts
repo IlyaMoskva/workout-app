@@ -24,6 +24,22 @@ export type { Project45Exercise } from './exercises/catalog';
 export { PROJECT45_EXERCISES } from './exercises/catalog';
 
 export type {
+  AggregateId,
+  Event,
+  EventId,
+  EventMetadata,
+  EventVersion,
+  ExerciseCompleted,
+  GoalChanged,
+  GtoTestRecorded,
+  Project45Event,
+  RecoveryRecorded,
+  WeightRecorded,
+  WorkoutCompleted,
+  WorkoutStarted,
+} from './events';
+
+export type {
   BlockType,
   ExercisePrescription,
   LocationType,
