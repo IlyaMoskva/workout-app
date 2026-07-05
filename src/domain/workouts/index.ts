@@ -39,5 +39,19 @@ export {
   flagPoorRecoveryRule,
   runPlanningRules,
 } from './planningRules';
+export type {
+  PlanScore,
+  ScoreByDimension,
+  ScoreDimension,
+  ScoreExplanation,
+  WorkoutScore,
+  WorkoutScoringOptions,
+} from './scoring';
+export {
+  SCORE_DIMENSIONS,
+  scoreTrainingDay,
+  scoreWorkoutPlan,
+  scoreWorkoutSession,
+} from './scoring';
 export type { Project45WeeklySeedPlan } from './weeklySeedPlan';
 export { PROJECT45_WEEKLY_SEED_PLAN } from './weeklySeedPlan';
