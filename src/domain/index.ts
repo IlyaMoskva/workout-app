@@ -38,12 +38,31 @@ export type {
   WorkoutSession,
   WorkoutSessionId,
 } from './workouts';
-export type { Planner, PlanningConstraints, PlanningContext, Project45WeeklySeedPlan } from './workouts';
+export type {
+  Planner,
+  PlanningConstraints,
+  PlanningContext,
+  PlanningRecoveryData,
+  PlanningRule,
+  PlanningRuleInput,
+  Project45WeeklySeedPlan,
+  RecoveryReadiness,
+  RuleOutcome,
+  RuleResult,
+  RuleSeverity,
+} from './workouts';
 export {
   BLOCK_TYPES,
   LOCATION_TYPES,
   PROJECT45_WEEKLY_SEED_PLAN,
   SESSION_TYPES,
+  STARTER_PLANNING_RULES,
+  avoidBackToBackHardRunningDaysRule,
+  avoidHeavyLowerBodyAfterRunningIntervalsRule,
+  coreActivationBeforeAbWheelRule,
+  ensureWeeklyRecoveryDayRule,
+  flagPoorRecoveryRule,
   planProject45Week,
   project45SeedPlanner,
+  runPlanningRules,
 } from './workouts';

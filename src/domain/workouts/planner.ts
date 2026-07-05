@@ -11,10 +11,21 @@ export type PlanningConstraints = Readonly<{
   maxWeeklyDurationMinutes?: number;
 }>;
 
+export type RecoveryReadiness = 'good' | 'fair' | 'poor';
+
+export type PlanningRecoveryData = Readonly<{
+  readiness?: RecoveryReadiness;
+  sleepHours?: number;
+  sorenessLevel?: number;
+  fatigueLevel?: number;
+  notes?: readonly string[];
+}>;
+
 export type PlanningContext = Readonly<{
   goals: readonly GoalId[];
   capabilities?: readonly CapabilityId[];
   constraints?: PlanningConstraints;
+  recovery?: PlanningRecoveryData;
   startDate?: string;
 }>;
 
