@@ -120,6 +120,58 @@ h1 {
   font-weight: 700;
 }
 
+.today-command {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  margin-top: 18px;
+  border: 1px solid #735a27;
+  border-radius: 8px;
+  background: #201b12;
+  padding: 14px;
+}
+
+.today-command.is-complete {
+  border-color: #6f8c56;
+  background: #182119;
+}
+
+.today-progress-ring {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  aspect-ratio: 1;
+  border: 7px solid #f0b85a;
+  border-radius: 50%;
+  color: #f7f1e8;
+  background: #10120f;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.today-command.is-complete .today-progress-ring {
+  border-color: #8fbf6a;
+}
+
+.today-command-copy {
+  min-width: 0;
+}
+
+.today-command-copy p,
+.today-command-copy span {
+  margin: 0;
+  color: #a9b0a2;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.today-command-copy h2 {
+  margin: 4px 0;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
 .summary-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -224,11 +276,50 @@ progress::-moz-progress-bar {
 }
 
 .session-progress {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 10px;
+  align-items: center;
   min-width: 0;
 }
 
-.session-progress progress {
-  max-width: 180px;
+.session-progress span {
+  color: #f0b85a;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.session-progress strong {
+  grid-column: 1 / -1;
+  color: #a9b0a2;
+  font-size: 13px;
+}
+
+.session-actions {
+  padding: 0 16px 16px;
+  background: #1e241e;
+}
+
+.session-actions button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #6f8c56;
+  border-radius: 8px;
+  color: #f7f1e8;
+  background: #23331f;
+  font: inherit;
+  font-weight: 900;
+}
+
+.session-panel.is-complete .session-heading,
+.session-panel.is-complete .session-actions {
+  background: #182119;
+}
+
+.session-panel.is-complete .session-actions button {
+  border-color: #465446;
+  color: #dce8d1;
+  background: #171a16;
 }
 
 h2,
@@ -286,12 +377,28 @@ h3 {
   grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   min-height: 88px;
-  padding: 12px 0;
+  padding: 14px 0;
   border-top: 1px solid #282e27;
 }
 
 .prescription-row:first-child {
   border-top: 0;
+}
+
+.prescription-row.is-done {
+  opacity: 0.78;
+}
+
+.prescription-row.is-done h4 {
+  color: #c7d9bd;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.prescription-row.is-done .dose-pill {
+  border-color: #486341;
+  color: #dce8d1;
+  background: #1b2719;
 }
 
 h4 {
@@ -321,21 +428,22 @@ h4 {
 .completion-control {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  width: fit-content;
-  min-height: 36px;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
   border: 1px solid #3f4d3f;
-  border-radius: 999px;
-  padding: 6px 10px 6px 8px;
+  border-radius: 8px;
+  padding: 8px 12px;
   color: #dce8d1;
   background: #182119;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 .completion-control input {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   margin: 0;
   accent-color: #f0b85a;
 }
@@ -966,9 +1074,24 @@ h4 {
     align-items: end;
   }
 
+  .session-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 20px 20px;
+  }
+
+  .session-actions button {
+    width: auto;
+    min-width: 176px;
+  }
+
   .prescription-row {
     grid-template-columns: 116px minmax(0, 1fr) auto;
     align-items: start;
+  }
+
+  .completion-control {
+    width: fit-content;
   }
 
   .filter-grid {
