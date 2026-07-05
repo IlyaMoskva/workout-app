@@ -47,9 +47,15 @@ export type {
   PlanningRuleInput,
   Project45WeeklySeedPlan,
   RecoveryReadiness,
+  PlanScore,
+  ScoreByDimension,
+  ScoreDimension,
+  ScoreExplanation,
   RuleOutcome,
   RuleResult,
   RuleSeverity,
+  WorkoutScore,
+  WorkoutScoringOptions,
 } from './workouts';
 export {
   BLOCK_TYPES,
@@ -65,4 +71,8 @@ export {
   planProject45Week,
   project45SeedPlanner,
   runPlanningRules,
+  SCORE_DIMENSIONS,
+  scoreTrainingDay,
+  scoreWorkoutPlan,
+  scoreWorkoutSession,
 } from './workouts';
