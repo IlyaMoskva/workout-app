@@ -15,7 +15,29 @@ export type {
 } from './workout.types';
 
 export { BLOCK_TYPES, LOCATION_TYPES, SESSION_TYPES } from './workout.types';
-export type { Planner, PlanningConstraints, PlanningContext } from './planner';
+export type {
+  Planner,
+  PlanningConstraints,
+  PlanningContext,
+  PlanningRecoveryData,
+  RecoveryReadiness,
+} from './planner';
 export { planProject45Week, project45SeedPlanner } from './planner';
+export type {
+  PlanningRule,
+  PlanningRuleInput,
+  RuleOutcome,
+  RuleResult,
+  RuleSeverity,
+} from './planningRules';
+export {
+  STARTER_PLANNING_RULES,
+  avoidBackToBackHardRunningDaysRule,
+  avoidHeavyLowerBodyAfterRunningIntervalsRule,
+  coreActivationBeforeAbWheelRule,
+  ensureWeeklyRecoveryDayRule,
+  flagPoorRecoveryRule,
+  runPlanningRules,
+} from './planningRules';
 export type { Project45WeeklySeedPlan } from './weeklySeedPlan';
 export { PROJECT45_WEEKLY_SEED_PLAN } from './weeklySeedPlan';
