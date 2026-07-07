@@ -23,6 +23,7 @@ import {
   COMPLETION_STORAGE_KEY,
   GTO_STORAGE_KEY,
   LOCAL_DATA_KEYS,
+  PROJECT45_PREVIEW_BASE_PATH,
   RECOVERY_STORAGE_KEY,
   SETTINGS_STORAGE_KEY,
   type AppView,
@@ -1854,8 +1855,10 @@ function App() {
   return (
     <main className="app-shell">
       <header className="app-masthead" aria-label="Project45 MVP status">
-        <span>Project45</span>
-        <strong>{APP_VERSION_LABEL}</strong>
+        <span>Project45 preview</span>
+        <strong>
+          {APP_VERSION_LABEL} - {PROJECT45_PREVIEW_BASE_PATH}
+        </strong>
       </header>
       <nav className="app-nav" aria-label="Primary">
         {APP_NAV_ITEMS.map((item) => (

@@ -1,4 +1,6 @@
 export const APP_VERSION_LABEL = 'MVP 0.1';
+export const PROJECT45_PREVIEW_BASE_PATH = '/workout-app/project45/';
+export const LOCAL_STORAGE_NAMESPACE = 'project45.';
 
 export const APP_NAV_ITEMS = [
   { id: 'today', label: 'Today' },
@@ -12,10 +14,10 @@ export const APP_NAV_ITEMS = [
 
 export type AppView = (typeof APP_NAV_ITEMS)[number]['id'];
 
-export const COMPLETION_STORAGE_KEY = 'project45.today.completions.v1';
-export const GTO_STORAGE_KEY = 'project45.gto.weekly-tests.v1';
-export const RECOVERY_STORAGE_KEY = 'project45.recovery.daily-check-ins.v1';
-export const SETTINGS_STORAGE_KEY = 'project45.settings.v1';
+export const COMPLETION_STORAGE_KEY = `${LOCAL_STORAGE_NAMESPACE}today.completions.v1`;
+export const GTO_STORAGE_KEY = `${LOCAL_STORAGE_NAMESPACE}gto.weekly-tests.v1`;
+export const RECOVERY_STORAGE_KEY = `${LOCAL_STORAGE_NAMESPACE}recovery.daily-check-ins.v1`;
+export const SETTINGS_STORAGE_KEY = `${LOCAL_STORAGE_NAMESPACE}settings.v1`;
 
 export type LocalDataKey =
   | typeof COMPLETION_STORAGE_KEY

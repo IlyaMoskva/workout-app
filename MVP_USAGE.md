@@ -2,6 +2,13 @@
 
 Project45 MVP 0.1 is a local-first daily workout app. It opens into **Today** by default so the first action is clear: review today's sessions and mark exercises complete as you train.
 
+Project45 is served as an MVP preview under `/workout-app/project45/` so the legacy app can remain unchanged at `/workout-app/`.
+
+GitHub Pages URLs:
+
+- Legacy app: `https://ilyamoskva.github.io/workout-app/`
+- Project45 preview: `https://ilyamoskva.github.io/workout-app/project45/`
+
 ## Run Locally
 
 ```bash
@@ -9,12 +16,27 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal. For a production check:
+Open `http://localhost:5173/workout-app/project45/`.
+
+The legacy app remains separate at the repository root `index.html`. Open that file directly, or serve the repository root with any static file server, when you need the original app.
+
+For a production check:
 
 ```bash
 npm run test:run
 npm run build
+npm run preview
 ```
+
+Then open `http://localhost:4173/workout-app/project45/`.
+
+## Phone Testing On Local LAN
+
+1. Connect the phone and development machine to the same network.
+2. Run `npm run dev`.
+3. Find the `Network` URL printed by Vite, usually similar to `http://192.168.x.x:5173/`.
+4. Open `http://192.168.x.x:5173/workout-app/project45/` on the phone.
+5. Use Today first, then check Week, History, Recovery, GTO, Library, Settings, and Settings -> Export / Import.
 
 ## Use The App Today
 

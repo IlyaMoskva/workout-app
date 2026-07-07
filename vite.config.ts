@@ -2,11 +2,12 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  base: '/workout-app/project45/',
   root: 'app',
   plugins: [react()],
   publicDir: '../public',
   build: {
-    outDir: '../dist',
+    outDir: '../dist/project45',
     emptyOutDir: true,
   },
 });
