@@ -29,7 +29,7 @@ body {
 
 .app-nav {
   display: grid;
-  grid-template-columns: repeat(5, minmax(74px, 1fr));
+  grid-template-columns: repeat(6, minmax(74px, 1fr));
   gap: 8px;
   position: sticky;
   top: 0;
@@ -505,13 +505,15 @@ h4 {
 .library-header,
 .gto-header,
 .recovery-header,
-.week-header {
+.week-header,
+.settings-header {
   padding: 16px 0 18px;
 }
 
 .library-subtitle,
 .gto-subtitle,
-.recovery-subtitle {
+.recovery-subtitle,
+.settings-subtitle {
   margin: 10px 0 0;
   color: #a9b0a2;
   font-size: 15px;
@@ -1099,6 +1101,113 @@ h4 {
   font-size: 14px;
 }
 
+.settings-summary {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.settings-summary div,
+.settings-panel {
+  border: 1px solid #2f342d;
+  border-radius: 8px;
+  background: #171a16;
+}
+
+.settings-summary div {
+  min-width: 0;
+  padding: 12px;
+}
+
+.settings-summary dt {
+  margin: 0 0 6px;
+  color: #f0b85a;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.settings-summary dd {
+  margin: 0;
+  color: #f7f1e8;
+  line-height: 1.4;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.settings-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.settings-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-section-heading span {
+  flex: 0 0 auto;
+  color: #a9b0a2;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.settings-option-grid,
+.settings-slot-list {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-check-card,
+.settings-slot-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  border: 1px solid #2c342c;
+  border-radius: 8px;
+  padding: 12px;
+  color: #dce8d1;
+  background: #141813;
+  font-weight: 800;
+}
+
+.settings-check-card:has(input:checked),
+.settings-slot-card:has(input:checked) {
+  border-color: #6f8c56;
+  background: #23331f;
+}
+
+.settings-check-card input,
+.settings-slot-card input {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: #f0b85a;
+}
+
+.settings-slot-card > span {
+  display: grid;
+  gap: 4px;
+}
+
+.settings-slot-card strong {
+  color: #f7f1e8;
+  font-size: 15px;
+}
+
+.settings-slot-card small {
+  color: #a9b0a2;
+  line-height: 1.35;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 @media (min-width: 680px) {
   .app-shell {
     padding: 32px;
@@ -1150,6 +1259,14 @@ h4 {
   }
 
   .filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .settings-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .settings-option-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
