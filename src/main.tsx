@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import {
+  EQUIPMENT_IDS,
+  GOAL_IDS,
   PROJECT45_EXERCISES,
   PROJECT45_WEEKLY_SEED_PLAN,
   type EquipmentId,
@@ -15,9 +17,10 @@ import {
 import { completionId } from './completion/completionId';
 import './styles.css';
 
-type AppView = 'today' | 'week' | 'recovery' | 'gto' | 'library';
+type AppView = 'today' | 'week' | 'recovery' | 'gto' | 'library' | 'settings';
 type GtoMetricId = 'run2KmSeconds' | 'pushUps' | 'pullUps' | 'absOneMinute' | 'sitAndReachCm';
 type RecoveryMetricId = 'sleepHours' | 'energy' | 'soreness' | 'stress' | 'libido' | 'readiness';
+type SessionSlotId = 'morningHome' | 'workBreak' | 'eveningGymOutdoor';
 type GtoEntry = Readonly<{
   id: string;
   date: string;
@@ -39,6 +42,11 @@ type RecoveryEntry = Readonly<{
 }>;
 type GtoFormState = Record<GtoMetricId, string>;
 type RecoveryFormState = Record<RecoveryMetricId, string>;
+type UserSettings = Readonly<{
+  activeGoals: readonly GoalId[];
+  availableEquipment: readonly EquipmentId[];
+  preferredSessionSlots: Readonly<Record<SessionSlotId, boolean>>;
+}>;
 type GtoMetric = Readonly<{
   id: GtoMetricId;
   label: string;
@@ -55,6 +63,35 @@ type GtoMetric = Readonly<{
 const COMPLETION_STORAGE_KEY = 'project45.today.completions.v1';
 const GTO_STORAGE_KEY = 'project45.gto.weekly-tests.v1';
 const RECOVERY_STORAGE_KEY = 'project45.recovery.daily-check-ins.v1';
+const SETTINGS_STORAGE_KEY = 'project45.settings.v1';
+
+const SESSION_SLOT_OPTIONS = [
+  {
+    id: 'morningHome',
+    label: 'Morning home',
+    detail: 'Short home work before the day starts.',
+  },
+  {
+    id: 'workBreak',
+    label: 'Work break',
+    detail: 'Small mobility or control session during the day.',
+  },
+  {
+    id: 'eveningGymOutdoor',
+    label: 'Evening gym/outdoor',
+    detail: 'Main gym, run, or outdoor session after work.',
+  },
+] as const satisfies readonly { id: SessionSlotId; label: string; detail: string }[];
+
+const DEFAULT_SETTINGS: UserSettings = {
+  activeGoals: PROJECT45_WEEKLY_SEED_PLAN.goals,
+  availableEquipment: ['bodyweight', 'floor_mat', 'dumbbells', 'cable_machine', 'lat_pulldown', 'gym_bench', 'outdoor'],
+  preferredSessionSlots: {
+    morningHome: true,
+    workBreak: false,
+    eveningGymOutdoor: true,
+  },
+};
 
 const weekdayFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
@@ -113,6 +150,43 @@ const readCompletions = (): Set<string> => {
 
 const writeCompletions = (completionIds: Set<string>): void => {
   window.localStorage.setItem(COMPLETION_STORAGE_KEY, JSON.stringify([...completionIds]));
+};
+
+const isGoalId = (value: unknown): value is GoalId =>
+  typeof value === 'string' && (GOAL_IDS as readonly string[]).includes(value);
+
+const isEquipmentId = (value: unknown): value is EquipmentId =>
+  typeof value === 'string' && (EQUIPMENT_IDS as readonly string[]).includes(value);
+
+const readSettings = (): UserSettings => {
+  try {
+    const stored = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+
+    if (!stored) {
+      return DEFAULT_SETTINGS;
+    }
+
+    const parsed = JSON.parse(stored) as Partial<UserSettings>;
+    const preferredSessionSlots = parsed.preferredSessionSlots ?? DEFAULT_SETTINGS.preferredSessionSlots;
+
+    return {
+      activeGoals: Array.isArray(parsed.activeGoals) ? parsed.activeGoals.filter(isGoalId) : DEFAULT_SETTINGS.activeGoals,
+      availableEquipment: Array.isArray(parsed.availableEquipment)
+        ? parsed.availableEquipment.filter(isEquipmentId)
+        : DEFAULT_SETTINGS.availableEquipment,
+      preferredSessionSlots: {
+        morningHome: Boolean(preferredSessionSlots.morningHome),
+        workBreak: Boolean(preferredSessionSlots.workBreak),
+        eveningGymOutdoor: Boolean(preferredSessionSlots.eveningGymOutdoor),
+      },
+    };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+};
+
+const writeSettings = (settings: UserSettings): void => {
+  window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
 };
 
 const formatDuration = (seconds: number): string => {
@@ -506,7 +580,11 @@ const sessionMomentLabel = (session: WorkoutSession): string => {
   return labelText(session.location);
 };
 
-function TodayScreen() {
+type TodayScreenProps = Readonly<{
+  settings: UserSettings;
+}>;
+
+function TodayScreen({ settings }: TodayScreenProps) {
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => readCompletions());
   const today = useMemo(() => new Date(), []);
   const dateKey = formatDateKey(today);
@@ -536,7 +614,8 @@ function TodayScreen() {
   const prescriptionItems = todayPrescriptionItems(dateKey, trainingDay);
   const missingCatalogItems = prescriptionItems.filter((item) => item.isMissingExercise);
   const nextPrescription = prescriptionItems.find((item) => !completedIds.has(item.id));
-  const focusText = trainingDayFocus(trainingDay);
+  const focusText =
+    settings.activeGoals.length > 0 ? settings.activeGoals.map(labelText).join(', ') : trainingDayFocus(trainingDay);
 
   const toggleCompletion = (id: string): void => {
     setCompletedIds((currentIds) => {
@@ -1243,8 +1322,141 @@ function RecoveryScreen() {
   );
 }
 
+type SettingsScreenProps = Readonly<{
+  settings: UserSettings;
+  onSettingsChange: (settings: UserSettings) => void;
+}>;
+
+function SettingsScreen({ settings, onSettingsChange }: SettingsScreenProps) {
+  const toggleGoal = (goal: GoalId): void => {
+    const activeGoals = settings.activeGoals.includes(goal)
+      ? settings.activeGoals.filter((currentGoal) => currentGoal !== goal)
+      : [...settings.activeGoals, goal];
+
+    onSettingsChange({
+      ...settings,
+      activeGoals,
+    });
+  };
+
+  const toggleEquipment = (equipment: EquipmentId): void => {
+    const availableEquipment = settings.availableEquipment.includes(equipment)
+      ? settings.availableEquipment.filter((currentEquipment) => currentEquipment !== equipment)
+      : [...settings.availableEquipment, equipment];
+
+    onSettingsChange({
+      ...settings,
+      availableEquipment,
+    });
+  };
+
+  const toggleSessionSlot = (slot: SessionSlotId): void => {
+    onSettingsChange({
+      ...settings,
+      preferredSessionSlots: {
+        ...settings.preferredSessionSlots,
+        [slot]: !settings.preferredSessionSlots[slot],
+      },
+    });
+  };
+
+  const activeSlotLabels = SESSION_SLOT_OPTIONS.filter((slot) => settings.preferredSessionSlots[slot.id]).map(
+    (slot) => slot.label,
+  );
+
+  return (
+    <>
+      <header className="settings-header">
+        <p className="eyebrow">Local profile</p>
+        <h1>Settings</h1>
+        <p className="settings-subtitle">Goals, equipment, and preferred training slots stay on this device.</p>
+      </header>
+
+      <dl className="settings-summary" aria-label="Active settings summary">
+        <div>
+          <dt>Active goals</dt>
+          <dd>{settings.activeGoals.length > 0 ? settings.activeGoals.map(labelText).join(', ') : 'None selected'}</dd>
+        </div>
+        <div>
+          <dt>Equipment</dt>
+          <dd>
+            {settings.availableEquipment.length > 0
+              ? settings.availableEquipment.map(labelText).join(', ')
+              : 'None selected'}
+          </dd>
+        </div>
+        <div>
+          <dt>Session slots</dt>
+          <dd>{activeSlotLabels.length > 0 ? activeSlotLabels.join(', ') : 'None selected'}</dd>
+        </div>
+      </dl>
+
+      <section className="settings-panel" aria-labelledby="settings-goals-heading">
+        <div className="settings-section-heading">
+          <h2 id="settings-goals-heading">Active goals</h2>
+          <span>{settings.activeGoals.length} selected</span>
+        </div>
+        <div className="settings-option-grid">
+          {GOAL_IDS.map((goal) => (
+            <label className="settings-check-card" key={goal}>
+              <input checked={settings.activeGoals.includes(goal)} onChange={() => toggleGoal(goal)} type="checkbox" />
+              <span>{labelText(goal)}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className="settings-panel" aria-labelledby="settings-equipment-heading">
+        <div className="settings-section-heading">
+          <h2 id="settings-equipment-heading">Available equipment</h2>
+          <span>{settings.availableEquipment.length} selected</span>
+        </div>
+        <div className="settings-option-grid">
+          {EQUIPMENT_IDS.map((equipment) => (
+            <label className="settings-check-card" key={equipment}>
+              <input
+                checked={settings.availableEquipment.includes(equipment)}
+                onChange={() => toggleEquipment(equipment)}
+                type="checkbox"
+              />
+              <span>{labelText(equipment)}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className="settings-panel" aria-labelledby="settings-slots-heading">
+        <div className="settings-section-heading">
+          <h2 id="settings-slots-heading">Preferred session slots</h2>
+          <span>{activeSlotLabels.length} selected</span>
+        </div>
+        <div className="settings-slot-list">
+          {SESSION_SLOT_OPTIONS.map((slot) => (
+            <label className="settings-slot-card" key={slot.id}>
+              <input
+                checked={settings.preferredSessionSlots[slot.id]}
+                onChange={() => toggleSessionSlot(slot.id)}
+                type="checkbox"
+              />
+              <span>
+                <strong>{slot.label}</strong>
+                <small>{slot.detail}</small>
+              </span>
+            </label>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
 function App() {
   const [view, setView] = useState<AppView>('today');
+  const [settings, setSettings] = useState<UserSettings>(() => readSettings());
+
+  useEffect(() => {
+    writeSettings(settings);
+  }, [settings]);
 
   return (
     <main className="app-shell">
@@ -1264,12 +1476,16 @@ function App() {
         <button aria-pressed={view === 'library'} onClick={() => setView('library')} type="button">
           Library
         </button>
+        <button aria-pressed={view === 'settings'} onClick={() => setView('settings')} type="button">
+          Settings
+        </button>
       </nav>
-      {view === 'today' ? <TodayScreen /> : null}
+      {view === 'today' ? <TodayScreen settings={settings} /> : null}
       {view === 'week' ? <WeekScreen /> : null}
       {view === 'recovery' ? <RecoveryScreen /> : null}
       {view === 'gto' ? <GtoScreen /> : null}
       {view === 'library' ? <ExerciseLibraryScreen /> : null}
+      {view === 'settings' ? <SettingsScreen settings={settings} onSettingsChange={setSettings} /> : null}
     </main>
   );
 }
