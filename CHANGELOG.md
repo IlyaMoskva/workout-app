@@ -32,6 +32,7 @@ Added:
 - Local JSON backup export and validated import controls in Settings.
 - MVP 0.1 release polish with visible version, Today-first navigation smoke checks, and daily-use documentation.
 - Project45 GitHub Pages preview under `/workout-app/project45/` with legacy root app preserved at `/workout-app/`.
+- Exercise media inventory with legacy GIF mapping, Today/Library instruction cards, and missing-media documentation.
 
 Changed:
 
