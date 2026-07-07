@@ -15,9 +15,21 @@ import {
   type WorkoutSession,
 } from './domain';
 import { completionId } from './completion/completionId';
+import {
+  APP_NAV_ITEMS,
+  APP_VERSION_LABEL,
+  BACKUP_SCHEMA,
+  BACKUP_VERSION,
+  COMPLETION_STORAGE_KEY,
+  GTO_STORAGE_KEY,
+  LOCAL_DATA_KEYS,
+  RECOVERY_STORAGE_KEY,
+  SETTINGS_STORAGE_KEY,
+  type AppView,
+  type LocalDataKey,
+} from './mvp';
 import './styles.css';
 
-type AppView = 'today' | 'week' | 'history' | 'recovery' | 'gto' | 'library' | 'settings';
 type GtoMetricId = 'run2KmSeconds' | 'pushUps' | 'pullUps' | 'absOneMinute' | 'sitAndReachCm';
 type RecoveryMetricId = 'sleepHours' | 'energy' | 'soreness' | 'stress' | 'libido' | 'readiness';
 type SessionSlotId = 'morningHome' | 'workBreak' | 'eveningGymOutdoor';
@@ -57,11 +69,6 @@ type HistoryDaySummary = Readonly<{
   totalCount: number;
   trainingDay: TrainingDay;
 }>;
-type LocalDataKey =
-  | typeof COMPLETION_STORAGE_KEY
-  | typeof GTO_STORAGE_KEY
-  | typeof RECOVERY_STORAGE_KEY
-  | typeof SETTINGS_STORAGE_KEY;
 type BackupStatus = Readonly<{
   message: string;
   type: 'success' | 'error';
@@ -92,19 +99,6 @@ type GtoMetric = Readonly<{
   format: (value: number) => string;
   parse: (value: string) => number | undefined;
 }>;
-
-const COMPLETION_STORAGE_KEY = 'project45.today.completions.v1';
-const GTO_STORAGE_KEY = 'project45.gto.weekly-tests.v1';
-const RECOVERY_STORAGE_KEY = 'project45.recovery.daily-check-ins.v1';
-const SETTINGS_STORAGE_KEY = 'project45.settings.v1';
-const BACKUP_SCHEMA = 'project45-local-backup';
-const BACKUP_VERSION = 1;
-const LOCAL_DATA_KEYS = [
-  SETTINGS_STORAGE_KEY,
-  COMPLETION_STORAGE_KEY,
-  RECOVERY_STORAGE_KEY,
-  GTO_STORAGE_KEY,
-] as const satisfies readonly LocalDataKey[];
 
 const SESSION_SLOT_OPTIONS = [
   {
@@ -1859,28 +1853,21 @@ function App() {
 
   return (
     <main className="app-shell">
+      <header className="app-masthead" aria-label="Project45 MVP status">
+        <span>Project45</span>
+        <strong>{APP_VERSION_LABEL}</strong>
+      </header>
       <nav className="app-nav" aria-label="Primary">
-        <button aria-pressed={view === 'today'} onClick={() => setView('today')} type="button">
-          Today
-        </button>
-        <button aria-pressed={view === 'week'} onClick={() => setView('week')} type="button">
-          Week
-        </button>
-        <button aria-pressed={view === 'history'} onClick={() => setView('history')} type="button">
-          History
-        </button>
-        <button aria-pressed={view === 'recovery'} onClick={() => setView('recovery')} type="button">
-          Recovery
-        </button>
-        <button aria-pressed={view === 'gto'} onClick={() => setView('gto')} type="button">
-          GTO
-        </button>
-        <button aria-pressed={view === 'library'} onClick={() => setView('library')} type="button">
-          Library
-        </button>
-        <button aria-pressed={view === 'settings'} onClick={() => setView('settings')} type="button">
-          Settings
-        </button>
+        {APP_NAV_ITEMS.map((item) => (
+          <button
+            aria-pressed={view === item.id}
+            key={item.id}
+            onClick={() => setView(item.id)}
+            type="button"
+          >
+            {item.label}
+          </button>
+        ))}
       </nav>
       {view === 'today' ? <TodayScreen settings={settings} /> : null}
       {view === 'week' ? <WeekScreen /> : null}
