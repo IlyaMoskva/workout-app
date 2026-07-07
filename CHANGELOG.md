@@ -30,6 +30,7 @@ Added:
 - MVP Settings screen for local active goals, available equipment, and preferred session slots.
 - Local History screen grouping workout completions by date with recent-day status and day summaries.
 - Local JSON backup export and validated import controls in Settings.
+- MVP 0.1 release polish with visible version, Today-first navigation smoke checks, and daily-use documentation.
 
 Changed:
 

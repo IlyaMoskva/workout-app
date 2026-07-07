@@ -22,6 +22,8 @@ npm install
 npm run dev
 ```
 
+Project45 MVP 0.1 opens into the Today screen by default. See [MVP_USAGE.md](MVP_USAGE.md) for the current daily-use flow, reachable MVP screens, local backup/restore notes, mobile guidance, and known limitations.
+
 Build:
 
 ```bash
