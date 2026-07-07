@@ -29,7 +29,7 @@ body {
 
 .app-nav {
   display: grid;
-  grid-template-columns: repeat(6, minmax(74px, 1fr));
+  grid-template-columns: repeat(7, minmax(74px, 1fr));
   gap: 8px;
   position: sticky;
   top: 0;
@@ -504,6 +504,7 @@ h4 {
 
 .library-header,
 .gto-header,
+.history-header,
 .recovery-header,
 .week-header,
 .settings-header {
@@ -512,6 +513,7 @@ h4 {
 
 .library-subtitle,
 .gto-subtitle,
+.history-subtitle,
 .recovery-subtitle,
 .settings-subtitle {
   margin: 10px 0 0;
@@ -968,6 +970,212 @@ h4 {
   font-size: 14px;
 }
 
+.history-empty-state,
+.history-summary {
+  border: 1px solid #2f342d;
+  border-radius: 8px;
+  background: #171a16;
+}
+
+.history-empty-state {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.history-empty-state p {
+  margin: 0;
+  color: #a9b0a2;
+  line-height: 1.45;
+  font-size: 14px;
+}
+
+.history-day-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.history-day-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 84px;
+  border: 1px solid #2f342d;
+  border-radius: 8px;
+  padding: 14px;
+  color: #f7f1e8;
+  background: #171a16;
+  text-align: left;
+  font: inherit;
+}
+
+.history-day-card[aria-pressed='true'] {
+  border-color: #f0b85a;
+}
+
+.history-day-card > span:first-child,
+.history-day-progress {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.history-day-card strong {
+  color: #f7f1e8;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.history-day-card small {
+  color: #a9b0a2;
+  line-height: 1.3;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.history-day-progress {
+  justify-items: end;
+}
+
+.history-day-progress strong {
+  color: #f0b85a;
+  font-size: 20px;
+}
+
+.history-status-pill {
+  grid-column: 1 / -1;
+  width: fit-content;
+  border: 1px solid #465446;
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #dce8d1;
+  background: #182119;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.history-day-card.status-complete,
+.history-summary.status-complete {
+  border-color: #6f8c56;
+}
+
+.history-day-card.status-complete .history-status-pill {
+  border-color: #6f8c56;
+  background: #23331f;
+}
+
+.history-day-card.status-partial,
+.history-summary.status-partial {
+  border-color: #735a27;
+}
+
+.history-day-card.status-partial .history-status-pill {
+  border-color: #735a27;
+  color: #f6dfac;
+  background: #2a2114;
+}
+
+.history-day-card.status-missed,
+.history-summary.status-missed {
+  border-color: #73413d;
+}
+
+.history-day-card.status-missed .history-status-pill {
+  border-color: #73413d;
+  color: #f0c1bd;
+  background: #2b1917;
+}
+
+.history-summary {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 32px;
+}
+
+.history-summary-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.history-summary-heading p,
+.history-session-card p {
+  margin: 0 0 6px;
+  color: #f0b85a;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.history-summary-heading > span {
+  flex: 0 0 auto;
+  color: #f0b85a;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.history-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.history-summary-grid div {
+  min-width: 0;
+  border: 1px solid #2c342c;
+  border-radius: 8px;
+  background: #141813;
+  padding: 10px;
+}
+
+.history-summary-grid dt {
+  margin: 0 0 5px;
+  color: #98a092;
+  font-size: 12px;
+}
+
+.history-summary-grid dd {
+  margin: 0;
+  color: #f7f1e8;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.history-session-list {
+  display: grid;
+  gap: 10px;
+}
+
+.history-session-card {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #2f342d;
+  padding-top: 12px;
+}
+
+.history-session-card:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.history-session-card > span {
+  width: fit-content;
+  border: 1px solid #354151;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #d8e7f5;
+  background: #151c24;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .filter-grid {
   display: grid;
   gap: 10px;
@@ -1294,5 +1502,18 @@ h4 {
   .week-day-heading {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
+  }
+
+  .history-day-card {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .history-status-pill {
+    grid-column: auto;
+  }
+
+  .history-session-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 }

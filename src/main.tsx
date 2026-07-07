@@ -17,10 +17,11 @@ import {
 import { completionId } from './completion/completionId';
 import './styles.css';
 
-type AppView = 'today' | 'week' | 'recovery' | 'gto' | 'library' | 'settings';
+type AppView = 'today' | 'week' | 'history' | 'recovery' | 'gto' | 'library' | 'settings';
 type GtoMetricId = 'run2KmSeconds' | 'pushUps' | 'pullUps' | 'absOneMinute' | 'sitAndReachCm';
 type RecoveryMetricId = 'sleepHours' | 'energy' | 'soreness' | 'stress' | 'libido' | 'readiness';
 type SessionSlotId = 'morningHome' | 'workBreak' | 'eveningGymOutdoor';
+type HistoryDayStatus = 'complete' | 'partial' | 'missed' | 'open';
 type GtoEntry = Readonly<{
   id: string;
   date: string;
@@ -46,6 +47,15 @@ type UserSettings = Readonly<{
   activeGoals: readonly GoalId[];
   availableEquipment: readonly EquipmentId[];
   preferredSessionSlots: Readonly<Record<SessionSlotId, boolean>>;
+}>;
+type HistoryDaySummary = Readonly<{
+  completedCount: number;
+  date: Date;
+  dateKey: string;
+  progress: number;
+  status: HistoryDayStatus;
+  totalCount: number;
+  trainingDay: TrainingDay;
 }>;
 type GtoMetric = Readonly<{
   id: GtoMetricId;
@@ -514,6 +524,74 @@ const completedSessionPrescriptionCount = (
     0,
   );
 
+const completionDateKey = (id: string): string | undefined => {
+  const [dateKey] = id.split(':');
+  return /^\d{4}-\d{2}-\d{2}$/.test(dateKey) ? dateKey : undefined;
+};
+
+const groupCompletionsByDate = (completedIds: Set<string>): Map<string, Set<string>> => {
+  const groupedCompletions = new Map<string, Set<string>>();
+
+  for (const id of completedIds) {
+    const dateKey = completionDateKey(id);
+
+    if (!dateKey) {
+      continue;
+    }
+
+    const dateCompletions = groupedCompletions.get(dateKey) ?? new Set<string>();
+    dateCompletions.add(id);
+    groupedCompletions.set(dateKey, dateCompletions);
+  }
+
+  return groupedCompletions;
+};
+
+const historyStatus = (
+  dateKey: string,
+  todayKey: string,
+  completedCount: number,
+  totalCount: number,
+): HistoryDayStatus => {
+  if (totalCount > 0 && completedCount === totalCount) {
+    return 'complete';
+  }
+
+  if (completedCount > 0) {
+    return 'partial';
+  }
+
+  if (dateKey < todayKey && totalCount > 0) {
+    return 'missed';
+  }
+
+  return 'open';
+};
+
+const recentHistoryDays = (today: Date, completedIds: Set<string>, dayCount = 14): HistoryDaySummary[] => {
+  const todayKey = formatDateKey(today);
+  const groupedCompletions = groupCompletionsByDate(completedIds);
+
+  return Array.from({ length: dayCount }, (_, index) => {
+    const date = addDays(today, -index);
+    const dateKey = formatDateKey(date);
+    const trainingDay = resolveTrainingDay(date);
+    const totalCount = trainingDayPrescriptionCount(trainingDay);
+    const completedCount = completedPrescriptionCount(dateKey, trainingDay, groupedCompletions.get(dateKey) ?? new Set());
+    const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+    return {
+      completedCount,
+      date,
+      dateKey,
+      progress,
+      status: historyStatus(dateKey, todayKey, completedCount, totalCount),
+      totalCount,
+      trainingDay,
+    };
+  });
+};
+
 type TodayPrescriptionItem = Readonly<{
   block: WorkoutBlock;
   exercise?: Project45Exercise;
@@ -805,6 +883,109 @@ function TodayScreen({ settings }: TodayScreenProps) {
           );
         })}
       </section>
+    </>
+  );
+}
+
+function HistoryScreen() {
+  const [completedIds] = useState<Set<string>>(() => readCompletions());
+  const today = useMemo(() => new Date(), []);
+  const historyDays = useMemo(() => recentHistoryDays(today, completedIds), [completedIds, today]);
+  const [selectedDateKey, setSelectedDateKey] = useState<string>(() => historyDays[0]?.dateKey ?? formatDateKey(today));
+  const selectedDay = historyDays.find((historyDay) => historyDay.dateKey === selectedDateKey) ?? historyDays[0];
+  const hasStoredCompletions = completedIds.size > 0;
+
+  return (
+    <>
+      <header className="history-header">
+        <p className="eyebrow">Local log</p>
+        <h1>History</h1>
+        <p className="history-subtitle">Recent Project45 days from completion data saved on this device.</p>
+      </header>
+
+      {!hasStoredCompletions ? (
+        <section className="history-empty-state" role="status">
+          <h2>No completed exercises yet</h2>
+          <p>Finish items on Today and they will appear here grouped by date.</p>
+        </section>
+      ) : null}
+
+      <section className="history-day-list" aria-label="Recent training history">
+        {historyDays.map((historyDay) => (
+          <button
+            aria-pressed={selectedDay?.dateKey === historyDay.dateKey}
+            className={`history-day-card status-${historyDay.status}`}
+            key={historyDay.dateKey}
+            onClick={() => setSelectedDateKey(historyDay.dateKey)}
+            type="button"
+          >
+            <span>
+              <strong>{weekdayFormatter.format(historyDay.date)}</strong>
+              <small>{historyDay.trainingDay.title ?? `Day ${historyDay.trainingDay.dayIndex}`}</small>
+            </span>
+            <span className="history-day-progress">
+              <strong>{historyDay.progress}%</strong>
+              <small>
+                {historyDay.completedCount}/{historyDay.totalCount} done
+              </small>
+            </span>
+            <span className="history-status-pill">{labelText(historyDay.status)}</span>
+          </button>
+        ))}
+      </section>
+
+      {selectedDay ? (
+        <section className={`history-summary status-${selectedDay.status}`} aria-label="Selected day summary">
+          <div className="history-summary-heading">
+            <div>
+              <p>{weekdayFormatter.format(selectedDay.date)}</p>
+              <h2>{selectedDay.trainingDay.title ?? `Day ${selectedDay.trainingDay.dayIndex}`}</h2>
+            </div>
+            <span>{selectedDay.progress}%</span>
+          </div>
+          <progress value={selectedDay.completedCount} max={Math.max(selectedDay.totalCount, 1)}>
+            {selectedDay.completedCount} of {selectedDay.totalCount}
+          </progress>
+          <dl className="history-summary-grid">
+            <div>
+              <dt>Status</dt>
+              <dd>{labelText(selectedDay.status)}</dd>
+            </div>
+            <div>
+              <dt>Completed</dt>
+              <dd>
+                {selectedDay.completedCount}/{selectedDay.totalCount}
+              </dd>
+            </div>
+            <div>
+              <dt>Sessions</dt>
+              <dd>{selectedDay.trainingDay.sessions.length}</dd>
+            </div>
+          </dl>
+
+          <div className="history-session-list">
+            {selectedDay.trainingDay.sessions.map((session) => {
+              const sessionTotal = sessionPrescriptionCount(session);
+              const sessionDone = completedSessionPrescriptionCount(selectedDay.dateKey, session, completedIds);
+              const sessionProgress = sessionTotal > 0 ? Math.round((sessionDone / sessionTotal) * 100) : 0;
+
+              return (
+                <article className="history-session-card" key={session.id}>
+                  <div>
+                    <p>
+                      {sessionMomentLabel(session)} - {labelText(session.location)}
+                    </p>
+                    <h3>{session.title}</h3>
+                  </div>
+                  <span>
+                    {sessionProgress}% - {sessionDone}/{sessionTotal}
+                  </span>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }
@@ -1467,6 +1648,9 @@ function App() {
         <button aria-pressed={view === 'week'} onClick={() => setView('week')} type="button">
           Week
         </button>
+        <button aria-pressed={view === 'history'} onClick={() => setView('history')} type="button">
+          History
+        </button>
         <button aria-pressed={view === 'recovery'} onClick={() => setView('recovery')} type="button">
           Recovery
         </button>
@@ -1482,6 +1666,7 @@ function App() {
       </nav>
       {view === 'today' ? <TodayScreen settings={settings} /> : null}
       {view === 'week' ? <WeekScreen /> : null}
+      {view === 'history' ? <HistoryScreen /> : null}
       {view === 'recovery' ? <RecoveryScreen /> : null}
       {view === 'gto' ? <GtoScreen /> : null}
       {view === 'library' ? <ExerciseLibraryScreen /> : null}
