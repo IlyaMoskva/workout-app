@@ -1416,6 +1416,63 @@ h4 {
   font-weight: 700;
 }
 
+.backup-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.backup-actions button,
+.backup-import-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border: 1px solid #6f8c56;
+  border-radius: 8px;
+  padding: 0 14px;
+  color: #f7f1e8;
+  background: #23331f;
+  text-align: center;
+  font: inherit;
+  font-weight: 900;
+}
+
+.backup-import-control {
+  border-color: #465446;
+  color: #dce8d1;
+  background: #171a16;
+}
+
+.backup-import-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.backup-status {
+  margin: 0;
+  border: 1px solid #2c342c;
+  border-radius: 8px;
+  padding: 12px;
+  line-height: 1.45;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.backup-status.is-success {
+  border-color: #6f8c56;
+  color: #dce8d1;
+  background: #182119;
+}
+
+.backup-status.is-error {
+  border-color: #73413d;
+  color: #f0c1bd;
+  background: #2b1917;
+}
+
 @media (min-width: 680px) {
   .app-shell {
     padding: 32px;
@@ -1475,6 +1532,10 @@ h4 {
   }
 
   .settings-option-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .backup-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
