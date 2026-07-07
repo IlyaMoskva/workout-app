@@ -29,6 +29,7 @@ Added:
 - Polished mobile Today workout surface with a focused day header, larger session cards, one-hand completion controls, full-day progress, and missing-plan/catalog states.
 - MVP Settings screen for local active goals, available equipment, and preferred session slots.
 - Local History screen grouping workout completions by date with recent-day status and day summaries.
+- Local JSON backup export and validated import controls in Settings.
 
 Changed:
 

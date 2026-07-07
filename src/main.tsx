@@ -57,6 +57,29 @@ type HistoryDaySummary = Readonly<{
   totalCount: number;
   trainingDay: TrainingDay;
 }>;
+type LocalDataKey =
+  | typeof COMPLETION_STORAGE_KEY
+  | typeof GTO_STORAGE_KEY
+  | typeof RECOVERY_STORAGE_KEY
+  | typeof SETTINGS_STORAGE_KEY;
+type BackupStatus = Readonly<{
+  message: string;
+  type: 'success' | 'error';
+}>;
+type Project45Backup = Readonly<{
+  schema: 'project45-local-backup';
+  version: 1;
+  exportedAt: string;
+  data: Partial<Record<LocalDataKey, unknown>>;
+  history: readonly Readonly<{
+    completedCount: number;
+    dateKey: string;
+    progress: number;
+    status: HistoryDayStatus;
+    totalCount: number;
+    trainingDayTitle: string;
+  }>[];
+}>;
 type GtoMetric = Readonly<{
   id: GtoMetricId;
   label: string;
@@ -74,6 +97,14 @@ const COMPLETION_STORAGE_KEY = 'project45.today.completions.v1';
 const GTO_STORAGE_KEY = 'project45.gto.weekly-tests.v1';
 const RECOVERY_STORAGE_KEY = 'project45.recovery.daily-check-ins.v1';
 const SETTINGS_STORAGE_KEY = 'project45.settings.v1';
+const BACKUP_SCHEMA = 'project45-local-backup';
+const BACKUP_VERSION = 1;
+const LOCAL_DATA_KEYS = [
+  SETTINGS_STORAGE_KEY,
+  COMPLETION_STORAGE_KEY,
+  RECOVERY_STORAGE_KEY,
+  GTO_STORAGE_KEY,
+] as const satisfies readonly LocalDataKey[];
 
 const SESSION_SLOT_OPTIONS = [
   {
@@ -168,6 +199,31 @@ const isGoalId = (value: unknown): value is GoalId =>
 const isEquipmentId = (value: unknown): value is EquipmentId =>
   typeof value === 'string' && (EQUIPMENT_IDS as readonly string[]).includes(value);
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const normalizeSettings = (value: unknown): UserSettings | undefined => {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const preferredSessionSlots = isRecord(value.preferredSessionSlots)
+    ? value.preferredSessionSlots
+    : DEFAULT_SETTINGS.preferredSessionSlots;
+
+  return {
+    activeGoals: Array.isArray(value.activeGoals) ? value.activeGoals.filter(isGoalId) : DEFAULT_SETTINGS.activeGoals,
+    availableEquipment: Array.isArray(value.availableEquipment)
+      ? value.availableEquipment.filter(isEquipmentId)
+      : DEFAULT_SETTINGS.availableEquipment,
+    preferredSessionSlots: {
+      morningHome: Boolean(preferredSessionSlots.morningHome),
+      workBreak: Boolean(preferredSessionSlots.workBreak),
+      eveningGymOutdoor: Boolean(preferredSessionSlots.eveningGymOutdoor),
+    },
+  };
+};
+
 const readSettings = (): UserSettings => {
   try {
     const stored = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -176,20 +232,7 @@ const readSettings = (): UserSettings => {
       return DEFAULT_SETTINGS;
     }
 
-    const parsed = JSON.parse(stored) as Partial<UserSettings>;
-    const preferredSessionSlots = parsed.preferredSessionSlots ?? DEFAULT_SETTINGS.preferredSessionSlots;
-
-    return {
-      activeGoals: Array.isArray(parsed.activeGoals) ? parsed.activeGoals.filter(isGoalId) : DEFAULT_SETTINGS.activeGoals,
-      availableEquipment: Array.isArray(parsed.availableEquipment)
-        ? parsed.availableEquipment.filter(isEquipmentId)
-        : DEFAULT_SETTINGS.availableEquipment,
-      preferredSessionSlots: {
-        morningHome: Boolean(preferredSessionSlots.morningHome),
-        workBreak: Boolean(preferredSessionSlots.workBreak),
-        eveningGymOutdoor: Boolean(preferredSessionSlots.eveningGymOutdoor),
-      },
-    };
+    return normalizeSettings(JSON.parse(stored)) ?? DEFAULT_SETTINGS;
   } catch {
     return DEFAULT_SETTINGS;
   }
@@ -590,6 +633,119 @@ const recentHistoryDays = (today: Date, completedIds: Set<string>, dayCount = 14
       trainingDay,
     };
   });
+};
+
+const isGtoEntry = (entry: unknown): entry is GtoEntry => isRecord(entry) && typeof entry.id === 'string';
+
+const historyBackupSnapshot = (today: Date, completedIds: Set<string>) =>
+  recentHistoryDays(today, completedIds).map((historyDay) => ({
+    completedCount: historyDay.completedCount,
+    dateKey: historyDay.dateKey,
+    progress: historyDay.progress,
+    status: historyDay.status,
+    totalCount: historyDay.totalCount,
+    trainingDayTitle: historyDay.trainingDay.title ?? `Day ${historyDay.trainingDay.dayIndex}`,
+  }));
+
+const createLocalBackup = (settings: UserSettings): Project45Backup => {
+  const completedIds = readCompletions();
+
+  return {
+    schema: BACKUP_SCHEMA,
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    data: {
+      [SETTINGS_STORAGE_KEY]: settings,
+      [COMPLETION_STORAGE_KEY]: [...completedIds],
+      [RECOVERY_STORAGE_KEY]: readRecoveryEntries(),
+      [GTO_STORAGE_KEY]: readGtoEntries(),
+    },
+    history: historyBackupSnapshot(new Date(), completedIds),
+  };
+};
+
+const validateBackupDataValue = (key: LocalDataKey, value: unknown): unknown | undefined => {
+  if (key === SETTINGS_STORAGE_KEY) {
+    return normalizeSettings(value);
+  }
+
+  if (key === COMPLETION_STORAGE_KEY) {
+    return Array.isArray(value) && value.every((item) => typeof item === 'string') ? value : undefined;
+  }
+
+  if (key === RECOVERY_STORAGE_KEY) {
+    return Array.isArray(value) && value.every(isRecoveryEntry) ? value : undefined;
+  }
+
+  if (key === GTO_STORAGE_KEY) {
+    return Array.isArray(value) && value.every(isGtoEntry) ? value : undefined;
+  }
+
+  return undefined;
+};
+
+const parseBackupImport = (
+  backupText: string,
+): { data: Partial<Record<LocalDataKey, unknown>>; importedSettings: UserSettings } | { error: string } => {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(backupText);
+  } catch {
+    return { error: 'Backup is not valid JSON.' };
+  }
+
+  if (!isRecord(parsed) || parsed.schema !== BACKUP_SCHEMA || parsed.version !== BACKUP_VERSION) {
+    return { error: 'Backup schema or version is not supported.' };
+  }
+
+  if (!isRecord(parsed.data)) {
+    return { error: 'Backup does not include local app data.' };
+  }
+
+  const nextData: Partial<Record<LocalDataKey, unknown>> = {};
+
+  for (const key of LOCAL_DATA_KEYS) {
+    if (!(key in parsed.data)) {
+      continue;
+    }
+
+    const validatedValue = validateBackupDataValue(key, parsed.data[key]);
+
+    if (typeof validatedValue === 'undefined') {
+      return { error: `Backup has invalid data for ${key}.` };
+    }
+
+    nextData[key] = validatedValue;
+  }
+
+  if (Object.keys(nextData).length === 0) {
+    return { error: 'Backup does not contain any known Project45 data keys.' };
+  }
+
+  return {
+    data: nextData,
+    importedSettings: (nextData[SETTINGS_STORAGE_KEY] as UserSettings | undefined) ?? readSettings(),
+  };
+};
+
+const importLocalBackup = (backupText: string): { importedKeys: number; importedSettings: UserSettings } | { error: string } => {
+  const parsedImport = parseBackupImport(backupText);
+
+  if ('error' in parsedImport) {
+    return parsedImport;
+  }
+
+  for (const key of LOCAL_DATA_KEYS) {
+    if (key in parsedImport.data) {
+      window.localStorage.setItem(key, JSON.stringify(parsedImport.data[key]));
+    }
+  }
+
+  return {
+    importedKeys: Object.keys(parsedImport.data).length,
+    importedSettings: parsedImport.importedSettings,
+  };
 };
 
 type TodayPrescriptionItem = Readonly<{
@@ -1509,6 +1665,8 @@ type SettingsScreenProps = Readonly<{
 }>;
 
 function SettingsScreen({ settings, onSettingsChange }: SettingsScreenProps) {
+  const [backupStatus, setBackupStatus] = useState<BackupStatus | undefined>();
+
   const toggleGoal = (goal: GoalId): void => {
     const activeGoals = settings.activeGoals.includes(goal)
       ? settings.activeGoals.filter((currentGoal) => currentGoal !== goal)
@@ -1544,6 +1702,45 @@ function SettingsScreen({ settings, onSettingsChange }: SettingsScreenProps) {
   const activeSlotLabels = SESSION_SLOT_OPTIONS.filter((slot) => settings.preferredSessionSlots[slot.id]).map(
     (slot) => slot.label,
   );
+  const exportBackup = (): void => {
+    const backup = createLocalBackup(settings);
+    const backupText = JSON.stringify(backup, null, 2);
+    const backupBlob = new Blob([backupText], { type: 'application/json' });
+    const backupUrl = URL.createObjectURL(backupBlob);
+    const downloadLink = document.createElement('a');
+
+    downloadLink.href = backupUrl;
+    downloadLink.download = `project45-backup-${formatDateKey(new Date())}.json`;
+    downloadLink.click();
+    URL.revokeObjectURL(backupUrl);
+    setBackupStatus({ type: 'success', message: 'Backup JSON exported from this browser.' });
+  };
+
+  const importBackup = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const importResult = importLocalBackup(await file.text());
+
+      if ('error' in importResult) {
+        setBackupStatus({ type: 'error', message: importResult.error });
+        return;
+      }
+
+      onSettingsChange(importResult.importedSettings);
+      setBackupStatus({
+        type: 'success',
+        message: `Imported ${importResult.importedKeys} local data key${importResult.importedKeys === 1 ? '' : 's'}.`,
+      });
+    } catch {
+      setBackupStatus({ type: 'error', message: 'Could not read that backup file.' });
+    }
+  };
 
   return (
     <>
@@ -1626,6 +1823,27 @@ function SettingsScreen({ settings, onSettingsChange }: SettingsScreenProps) {
             </label>
           ))}
         </div>
+      </section>
+
+      <section className="settings-panel" aria-labelledby="settings-backup-heading">
+        <div className="settings-section-heading">
+          <h2 id="settings-backup-heading">Export / Import</h2>
+          <span>JSON</span>
+        </div>
+        <div className="backup-actions">
+          <button onClick={exportBackup} type="button">
+            Export backup
+          </button>
+          <label className="backup-import-control">
+            <input accept="application/json,.json" onChange={importBackup} type="file" />
+            <span>Import backup</span>
+          </label>
+        </div>
+        {backupStatus ? (
+          <p className={`backup-status is-${backupStatus.type}`} role={backupStatus.type === 'error' ? 'alert' : 'status'}>
+            {backupStatus.message}
+          </p>
+        ) : null}
       </section>
     </>
   );
