@@ -26,6 +26,7 @@ Added:
 - Deterministic pure TypeScript workout lifecycle state transitions for planned, started, paused, completed, and skipped workouts.
 - Staff-level Project45 architecture document covering domain, engines, events, plugins, local-first design, tests, and roadmap.
 - More usable mobile Today screen with clearer day/session progress and obvious completion actions.
+- Polished mobile Today workout surface with a focused day header, larger session cards, one-hand completion controls, full-day progress, and missing-plan/catalog states.
 
 Changed:
 
