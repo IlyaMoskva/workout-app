@@ -7,7 +7,9 @@ import {
   BACKUP_VERSION,
   COMPLETION_STORAGE_KEY,
   GTO_STORAGE_KEY,
+  LOCAL_STORAGE_NAMESPACE,
   LOCAL_DATA_KEYS,
+  PROJECT45_PREVIEW_BASE_PATH,
   RECOVERY_STORAGE_KEY,
   SETTINGS_STORAGE_KEY,
 } from './mvp';
@@ -28,6 +30,7 @@ describe('MVP smoke checks', () => {
 
   it('exposes the visible MVP version label', () => {
     expect(APP_VERSION_LABEL).toBe('MVP 0.1');
+    expect(PROJECT45_PREVIEW_BASE_PATH).toBe('/project45/');
   });
 
   it('keeps known local-first data keys available for backup and restore', () => {
@@ -38,7 +41,8 @@ describe('MVP smoke checks', () => {
       GTO_STORAGE_KEY,
     ]);
     expect(new Set(LOCAL_DATA_KEYS).size).toBe(LOCAL_DATA_KEYS.length);
-    expect(LOCAL_DATA_KEYS.every((key) => key.startsWith('project45.'))).toBe(true);
+    expect(LOCAL_STORAGE_NAMESPACE).toBe('project45.');
+    expect(LOCAL_DATA_KEYS.every((key) => key.startsWith(LOCAL_STORAGE_NAMESPACE))).toBe(true);
     expect(BACKUP_SCHEMA).toBe('project45-local-backup');
     expect(BACKUP_VERSION).toBe(1);
   });

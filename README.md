@@ -22,13 +22,22 @@ npm install
 npm run dev
 ```
 
-Project45 MVP 0.1 opens into the Today screen by default. See [MVP_USAGE.md](MVP_USAGE.md) for the current daily-use flow, reachable MVP screens, local backup/restore notes, mobile guidance, and known limitations.
+Project45 MVP 0.1 is served separately from the legacy app:
+
+- Legacy app: open the repository root `index.html` directly in a browser, or serve the repository root with any static file server.
+- Project45 preview: run `npm run dev` and open `http://localhost:5173/project45/`.
+- Phone on local LAN: run `npm run dev`, note the `Network` URL Vite prints, and open `http://<your-computer-lan-ip>:5173/project45/` on the phone while both devices are on the same network.
+
+See [MVP_USAGE.md](MVP_USAGE.md) for the current daily-use flow, reachable MVP screens, local backup/restore notes, mobile guidance, and known limitations.
 
 Build:
 
 ```bash
 npm run build
+npm run preview
 ```
+
+The production preview is also served from `/project45/`.
 
 ## Project layout
 
