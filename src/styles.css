@@ -88,9 +88,11 @@ h1 {
 
 .date-line,
 .day-title,
+.day-focus,
 .session-meta,
 .block-heading p,
-.prescription-row p {
+.prescription-row p,
+.today-empty-state p {
   margin: 0;
   color: #a9b0a2;
 }
@@ -120,16 +122,22 @@ h1 {
   font-weight: 700;
 }
 
+.day-focus {
+  margin-top: 8px;
+  line-height: 1.4;
+  font-size: 15px;
+}
+
 .today-command {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 16px;
   align-items: center;
-  margin-top: 18px;
+  margin-top: 20px;
   border: 1px solid #735a27;
   border-radius: 8px;
   background: #201b12;
-  padding: 14px;
+  padding: 16px;
 }
 
 .today-command.is-complete {
@@ -140,13 +148,13 @@ h1 {
 .today-progress-ring {
   display: grid;
   place-items: center;
-  width: 72px;
+  width: 86px;
   aspect-ratio: 1;
-  border: 7px solid #f0b85a;
+  border: 8px solid #f0b85a;
   border-radius: 50%;
   color: #f7f1e8;
   background: #10120f;
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 900;
 }
 
@@ -168,13 +176,13 @@ h1 {
 
 .today-command-copy h2 {
   margin: 4px 0;
-  font-size: 20px;
+  font-size: 21px;
   line-height: 1.15;
 }
 
 .summary-strip {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin: 18px 0 0;
 }
@@ -199,6 +207,7 @@ h1 {
   color: #f7f1e8;
   font-size: 16px;
   font-weight: 800;
+  line-height: 1.25;
 }
 
 .day-progress {
@@ -228,7 +237,7 @@ h1 {
 
 progress {
   width: 100%;
-  height: 8px;
+  height: 10px;
   border: 0;
   border-radius: 999px;
   overflow: hidden;
@@ -251,7 +260,7 @@ progress::-moz-progress-bar {
 
 .session-list {
   display: grid;
-  gap: 14px;
+  gap: 18px;
   padding-bottom: 32px;
 }
 
@@ -260,12 +269,13 @@ progress::-moz-progress-bar {
   border-radius: 8px;
   background: #171a16;
   overflow: hidden;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
 }
 
 .session-heading {
   display: grid;
   gap: 14px;
-  padding: 16px;
+  padding: 18px;
   background: #1e241e;
 }
 
@@ -296,13 +306,13 @@ progress::-moz-progress-bar {
 }
 
 .session-actions {
-  padding: 0 16px 16px;
+  padding: 0 18px 18px;
   background: #1e241e;
 }
 
 .session-actions button {
   width: 100%;
-  min-height: 44px;
+  min-height: 56px;
   border: 1px solid #6f8c56;
   border-radius: 8px;
   color: #f7f1e8;
@@ -339,7 +349,7 @@ h2 {
 }
 
 .block-section {
-  padding: 16px;
+  padding: 18px;
   border-top: 1px solid #2f342d;
 }
 
@@ -375,9 +385,9 @@ h3 {
 .prescription-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
-  min-height: 88px;
-  padding: 14px 0;
+  gap: 12px;
+  min-height: 128px;
+  padding: 16px 0;
   border-top: 1px solid #282e27;
 }
 
@@ -386,7 +396,8 @@ h3 {
 }
 
 .prescription-row.is-done {
-  opacity: 0.78;
+  opacity: 0.86;
+  background: linear-gradient(90deg, rgba(35, 51, 31, 0.55), rgba(35, 51, 31, 0));
 }
 
 .prescription-row.is-done h4 {
@@ -401,6 +412,14 @@ h3 {
   background: #1b2719;
 }
 
+.prescription-row.is-missing {
+  border-color: #73413d;
+}
+
+.prescription-row.is-missing h4 {
+  color: #f0c1bd;
+}
+
 h4 {
   margin-bottom: 6px;
   font-size: 16px;
@@ -410,6 +429,11 @@ h4 {
 .prescription-row p {
   line-height: 1.45;
   font-size: 14px;
+}
+
+.prescription-notes {
+  margin-top: 8px;
+  color: #f6dfac;
 }
 
 .dose-pill {
@@ -431,19 +455,20 @@ h4 {
   justify-content: center;
   gap: 10px;
   width: 100%;
-  min-height: 48px;
+  min-height: 58px;
   border: 1px solid #3f4d3f;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   color: #dce8d1;
   background: #182119;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
+  order: 3;
 }
 
 .completion-control input {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   margin: 0;
   accent-color: #f0b85a;
 }
@@ -451,6 +476,30 @@ h4 {
 .completion-control:has(input:checked) {
   border-color: #6f8c56;
   background: #23331f;
+}
+
+.today-empty-state,
+.today-error-state {
+  border: 1px solid #2f342d;
+  border-radius: 8px;
+  background: #171a16;
+  padding: 18px;
+}
+
+.today-empty-state {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 32px;
+}
+
+.today-error-state {
+  margin-top: 14px;
+  border-color: #73413d;
+  color: #f0c1bd;
+  background: #2b1917;
+  line-height: 1.45;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .library-header,
@@ -1086,12 +1135,18 @@ h4 {
   }
 
   .prescription-row {
-    grid-template-columns: 116px minmax(0, 1fr) auto;
+    grid-template-columns: 136px minmax(0, 1fr) auto;
     align-items: start;
   }
 
   .completion-control {
     width: fit-content;
+    min-width: 126px;
+    order: initial;
+  }
+
+  .summary-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .filter-grid {

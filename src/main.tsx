@@ -9,6 +9,7 @@ import {
   type Project45Exercise,
   type TrainingDay,
   type WorkoutBlock,
+  type WorkoutPlan,
   type WorkoutSession,
 } from './domain';
 import { completionId } from './completion/completionId';
@@ -439,36 +440,103 @@ const completedSessionPrescriptionCount = (
     0,
   );
 
+type TodayPrescriptionItem = Readonly<{
+  block: WorkoutBlock;
+  exercise?: Project45Exercise;
+  id: string;
+  isMissingExercise: boolean;
+  prescription: ExercisePrescription;
+  session: WorkoutSession;
+}>;
+
+const resolveTodayTrainingDay = (plan: WorkoutPlan | undefined, today: Date): TrainingDay | undefined => {
+  if (!plan || plan.days.length === 0) {
+    return undefined;
+  }
+
+  const dayIndex = ((today.getDay() + 6) % 7) + 1;
+  return plan.days.find((day) => day.dayIndex === dayIndex);
+};
+
+const dayDurationMinutes = (trainingDay: TrainingDay): number =>
+  trainingDay.sessions.reduce((minutes, session) => minutes + (session.estimatedDurationMinutes ?? 0), 0);
+
+const trainingDayFocus = (trainingDay: TrainingDay): string => {
+  const goals = [...new Set(trainingDay.sessions.flatMap((session) => session.goals))];
+  return goals.length > 0 ? goals.map(labelText).join(', ') : 'Project45 training';
+};
+
+const todayPrescriptionItems = (dateKey: string, trainingDay: TrainingDay): TodayPrescriptionItem[] =>
+  trainingDay.sessions.flatMap((session) =>
+    session.blocks.flatMap((block) =>
+      block.prescriptions.map((prescription) => {
+        const exercise = resolveExercise(prescription);
+
+        return {
+          block,
+          exercise,
+          id: completionId(dateKey, session, block, prescription),
+          isMissingExercise: !exercise,
+          prescription,
+          session,
+        };
+      }),
+    ),
+  );
+
+const sessionMomentLabel = (session: WorkoutSession): string => {
+  const title = session.title.toLowerCase();
+
+  if (title.includes('morning')) {
+    return 'Morning';
+  }
+
+  if (title.includes('break')) {
+    return 'Work break';
+  }
+
+  if (title.includes('evening')) {
+    return session.location === 'gym' ? 'Evening gym' : 'Evening outdoor';
+  }
+
+  if (session.location === 'gym') {
+    return 'Gym';
+  }
+
+  return labelText(session.location);
+};
+
 function TodayScreen() {
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => readCompletions());
   const today = useMemo(() => new Date(), []);
   const dateKey = formatDateKey(today);
-  const trainingDay = resolveTrainingDay(today);
-  const totalMinutes = trainingDay.sessions.reduce(
-    (minutes, session) => minutes + (session.estimatedDurationMinutes ?? 0),
-    0,
-  );
+  const workoutPlan: WorkoutPlan | undefined = PROJECT45_WEEKLY_SEED_PLAN;
+  const trainingDay = resolveTodayTrainingDay(workoutPlan, today);
+
+  useEffect(() => {
+    writeCompletions(completedIds);
+  }, [completedIds]);
+
+  if (!trainingDay) {
+    return (
+      <section className="today-empty-state" role="status">
+        <p className="eyebrow">Today</p>
+        <h1>No workout plan</h1>
+        <p>Add a Project45 weekly plan to see today&apos;s sessions, progress, and completion controls here.</p>
+      </section>
+    );
+  }
+
+  const totalMinutes = dayDurationMinutes(trainingDay);
   const totalPrescriptions = trainingDayPrescriptionCount(trainingDay);
   const completedToday = completedPrescriptionCount(dateKey, trainingDay, completedIds);
   const dayProgress = totalPrescriptions > 0 ? Math.round((completedToday / totalPrescriptions) * 100) : 0;
   const remainingToday = Math.max(totalPrescriptions - completedToday, 0);
   const dayIsComplete = totalPrescriptions > 0 && completedToday === totalPrescriptions;
-  const nextPrescription = trainingDay.sessions
-    .flatMap((session) =>
-      session.blocks.flatMap((block) =>
-        block.prescriptions.map((prescription) => ({
-          block,
-          exercise: resolveExercise(prescription),
-          id: completionId(dateKey, session, block, prescription),
-          session,
-        })),
-      ),
-    )
-    .find((item) => !completedIds.has(item.id));
-
-  useEffect(() => {
-    writeCompletions(completedIds);
-  }, [completedIds]);
+  const prescriptionItems = todayPrescriptionItems(dateKey, trainingDay);
+  const missingCatalogItems = prescriptionItems.filter((item) => item.isMissingExercise);
+  const nextPrescription = prescriptionItems.find((item) => !completedIds.has(item.id));
+  const focusText = trainingDayFocus(trainingDay);
 
   const toggleCompletion = (id: string): void => {
     setCompletedIds((currentIds) => {
@@ -513,36 +581,64 @@ function TodayScreen() {
           </div>
           <div className="day-pill">Day {trainingDay.dayIndex}</div>
         </div>
-        <p className="day-title">{trainingDay.title}</p>
+        <p className="day-title">{trainingDay.title ?? 'Daily workout'}</p>
+        <p className="day-focus">Focus: {focusText}</p>
         <section className={`today-command${dayIsComplete ? ' is-complete' : ''}`} aria-label="Today progress">
           <div className="today-progress-ring" aria-hidden="true">
             {dayProgress}%
           </div>
           <div className="today-command-copy">
             <p>{dayIsComplete ? 'Day complete' : `${remainingToday} item${remainingToday === 1 ? '' : 's'} left`}</p>
-            <h2>{nextPrescription ? `Next: ${nextPrescription.exercise?.name ?? nextPrescription.id}` : 'Everything is done'}</h2>
+            <h2>
+              {nextPrescription
+                ? `Next: ${nextPrescription.exercise?.name ?? `Missing catalog: ${nextPrescription.prescription.exerciseId}`}`
+                : 'Everything is done'}
+            </h2>
             <span>{nextPrescription ? `${nextPrescription.session.title} - ${nextPrescription.block.name}` : 'Nice work today.'}</span>
           </div>
         </section>
+        <section className="day-progress" aria-label="Full-day progress">
+          <div>
+            <span>Full day progress</span>
+            <strong>{dayProgress}%</strong>
+          </div>
+          <progress value={completedToday} max={Math.max(totalPrescriptions, 1)}>
+            {completedToday} of {totalPrescriptions}
+          </progress>
+        </section>
         <dl className="summary-strip">
+          <div>
+            <dt>Focus</dt>
+            <dd>{focusText}</dd>
+          </div>
           <div>
             <dt>Sessions</dt>
             <dd>{trainingDay.sessions.length}</dd>
           </div>
           <div>
-            <dt>Time</dt>
+            <dt>Total duration</dt>
             <dd>{totalMinutes} min</dd>
           </div>
           <div>
-            <dt>Done</dt>
-            <dd>
-              {completedToday}/{totalPrescriptions}
-            </dd>
+            <dt>Complete</dt>
+            <dd>{dayProgress}%</dd>
           </div>
         </dl>
+        {missingCatalogItems.length > 0 ? (
+          <section className="today-error-state" role="alert">
+            {missingCatalogItems.length} catalog exercise {missingCatalogItems.length === 1 ? 'is' : 'are'} missing from
+            today&apos;s plan. You can still track completion while the catalog is repaired.
+          </section>
+        ) : null}
       </header>
 
       <section className="session-list" aria-label="Today's sessions">
+        {trainingDay.sessions.length === 0 ? (
+          <section className="today-empty-state" role="status">
+            <h2>No sessions today</h2>
+            <p>This training day exists, but it does not include any workout sessions yet.</p>
+          </section>
+        ) : null}
         {trainingDay.sessions.map((session) => {
           const sessionTotal = sessionPrescriptionCount(session);
           const sessionDone = completedSessionPrescriptionCount(dateKey, session, completedIds);
@@ -554,7 +650,7 @@ function TodayScreen() {
               <div className="session-heading">
                 <div>
                   <p className="session-meta">
-                    {session.location} - {session.estimatedDurationMinutes ?? 0} min - {session.type}
+                    {sessionMomentLabel(session)} - {labelText(session.location)} - {session.estimatedDurationMinutes ?? 0} min
                   </p>
                   <h2>{session.title}</h2>
                 </div>
@@ -589,12 +685,21 @@ function TodayScreen() {
                       {block.prescriptions.map((prescription) => {
                         const exercise = resolveExercise(prescription);
                         const dose = formatDose(prescription);
-                        const cue = exercise?.coachingCues[0] ?? exercise?.summary ?? 'Catalog details pending.';
+                        const cue =
+                          exercise?.coachingCues[0] ??
+                          exercise?.summary ??
+                          `Missing catalog exercise: ${prescription.exerciseId}`;
                         const id = completionId(dateKey, session, block, prescription);
                         const isDone = completedIds.has(id);
+                        const isMissingExercise = !exercise;
 
                         return (
-                          <li className={`prescription-row${isDone ? ' is-done' : ''}`} key={id}>
+                          <li
+                            className={`prescription-row${isDone ? ' is-done' : ''}${
+                              isMissingExercise ? ' is-missing' : ''
+                            }`}
+                            key={id}
+                          >
                             <label className="completion-control">
                               <input
                                 aria-label={`Mark ${exercise?.name ?? prescription.exerciseId} done`}
@@ -605,10 +710,11 @@ function TodayScreen() {
                               <span>{isDone ? 'Done' : 'Tap when done'}</span>
                             </label>
                             <div>
-                              <h4>{exercise?.name ?? prescription.exerciseId}</h4>
+                              <h4>{exercise?.name ?? `Missing catalog: ${prescription.exerciseId}`}</h4>
                               <p>{cue}</p>
+                              {prescription.notes ? <p className="prescription-notes">{prescription.notes.join(' ')}</p> : null}
                             </div>
-                            <span className="dose-pill">{dose}</span>
+                            {dose ? <span className="dose-pill">{dose}</span> : null}
                           </li>
                         );
                       })}
