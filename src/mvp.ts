@@ -1,5 +1,5 @@
 export const APP_VERSION_LABEL = 'MVP 0.1';
-export const PROJECT45_PREVIEW_BASE_PATH = '/project45/';
+export const PROJECT45_PREVIEW_BASE_PATH = '/workout-app/project45/';
 export const LOCAL_STORAGE_NAMESPACE = 'project45.';
 
 export const APP_NAV_ITEMS = [

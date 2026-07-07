@@ -30,7 +30,7 @@ describe('MVP smoke checks', () => {
 
   it('exposes the visible MVP version label', () => {
     expect(APP_VERSION_LABEL).toBe('MVP 0.1');
-    expect(PROJECT45_PREVIEW_BASE_PATH).toBe('/project45/');
+    expect(PROJECT45_PREVIEW_BASE_PATH).toBe('/workout-app/project45/');
   });
 
   it('keeps known local-first data keys available for backup and restore', () => {
