@@ -505,7 +505,7 @@ const formatDose = (prescription: ExercisePrescription): string => {
 
 const exerciseEquipment = (exercise: Project45Exercise): readonly EquipmentId[] =>
   'optional' in exercise.equipment
-    ? [...exercise.equipment.required, ...exercise.equipment.optional]
+    ? [...exercise.equipment.required, ...(exercise.equipment.optional ?? [])]
     : exercise.equipment.required;
 
 const exerciseHasGoal = (exercise: Project45Exercise, goal: GoalId): boolean =>
@@ -809,6 +809,56 @@ const sessionMomentLabel = (session: WorkoutSession): string => {
   return labelText(session.location);
 };
 
+type ExerciseInstructionMediaProps = Readonly<{
+  dose?: string;
+  exercise: Project45Exercise;
+}>;
+
+function ExerciseInstructionMedia({ dose, exercise }: ExerciseInstructionMediaProps) {
+  return (
+    <section className="exercise-instruction-media" aria-label={`${exercise.name} instruction`}>
+      <div className="exercise-media-frame">
+        {exercise.media ? (
+          <img alt={exercise.media.alt} loading="lazy" src={exercise.media.path} />
+        ) : (
+          <div className="exercise-media-placeholder" role="img" aria-label={`No media yet for ${exercise.name}`}>
+            No GIF yet
+          </div>
+        )}
+        {dose ? <span className="media-dose-pill">{dose}</span> : null}
+      </div>
+      <div className="exercise-instruction-copy">
+        <p>{exercise.shortInstruction}</p>
+        <details>
+          <summary>Full explanation</summary>
+          <div className="exercise-explanation-grid">
+            <section>
+              <h5>Steps</h5>
+              <ol>
+                {exercise.instructions.map((instruction) => (
+                  <li key={instruction}>{instruction}</li>
+                ))}
+              </ol>
+            </section>
+            <section>
+              <h5>Common mistakes</h5>
+              <ul>
+                {exercise.commonMistakes.map((mistake) => (
+                  <li key={mistake}>{mistake}</li>
+                ))}
+              </ul>
+            </section>
+            <section>
+              <h5>Coaching cue</h5>
+              <p>{exercise.coachingCues[0]}</p>
+            </section>
+          </div>
+        </details>
+      </div>
+    </section>
+  );
+}
+
 type TodayScreenProps = Readonly<{
   settings: UserSettings;
 }>;
@@ -993,10 +1043,6 @@ function TodayScreen({ settings }: TodayScreenProps) {
                       {block.prescriptions.map((prescription) => {
                         const exercise = resolveExercise(prescription);
                         const dose = formatDose(prescription);
-                        const cue =
-                          exercise?.coachingCues[0] ??
-                          exercise?.summary ??
-                          `Missing catalog exercise: ${prescription.exerciseId}`;
                         const id = completionId(dateKey, session, block, prescription);
                         const isDone = completedIds.has(id);
                         const isMissingExercise = !exercise;
@@ -1019,10 +1065,13 @@ function TodayScreen({ settings }: TodayScreenProps) {
                             </label>
                             <div>
                               <h4>{exercise?.name ?? `Missing catalog: ${prescription.exerciseId}`}</h4>
-                              <p>{cue}</p>
+                              {exercise ? (
+                                <ExerciseInstructionMedia dose={dose} exercise={exercise} />
+                              ) : (
+                                <p>{`Missing catalog exercise: ${prescription.exerciseId}`}</p>
+                              )}
                               {prescription.notes ? <p className="prescription-notes">{prescription.notes.join(' ')}</p> : null}
                             </div>
-                            {dose ? <span className="dose-pill">{dose}</span> : null}
                           </li>
                         );
                       })}
@@ -1307,6 +1356,10 @@ function ExerciseLibraryScreen() {
               <span className={`risk-pill risk-${exercise.risk.level}`}>{exercise.risk.level}</span>
             </div>
 
+            <div className="exercise-card-media">
+              <ExerciseInstructionMedia exercise={exercise} />
+            </div>
+
             <dl className="exercise-meta-grid">
               <div>
                 <dt>Goals</dt>
@@ -1321,15 +1374,6 @@ function ExerciseLibraryScreen() {
                 <dd>{exerciseEquipment(exercise).map(labelText).join(', ')}</dd>
               </div>
             </dl>
-
-            <section className="exercise-detail-section">
-              <h3>Instructions</h3>
-              <ol>
-                {exercise.instructions.map((instruction) => (
-                  <li key={instruction}>{instruction}</li>
-                ))}
-              </ol>
-            </section>
 
             <section className="exercise-detail-section">
               <h3>Coaching Cues</h3>

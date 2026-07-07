@@ -361,7 +361,8 @@ progress::-moz-progress-bar {
 
 h2,
 h3,
-h4 {
+h4,
+h5 {
   margin: 0;
   letter-spacing: 0;
 }
@@ -456,6 +457,105 @@ h4 {
 .prescription-row p {
   line-height: 1.45;
   font-size: 14px;
+}
+
+.exercise-instruction-media {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.exercise-media-frame {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 340px;
+  aspect-ratio: 4 / 3;
+  border: 1px solid #2c342c;
+  border-radius: 8px;
+  background: #10120f;
+}
+
+.exercise-media-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.exercise-media-placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: #a9b0a2;
+  background: #141813;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.media-dose-pill {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  max-width: calc(100% - 16px);
+  border: 1px solid #735a27;
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: #f6dfac;
+  background: rgba(32, 27, 18, 0.94);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.exercise-instruction-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.exercise-instruction-copy details {
+  border: 1px solid #2c342c;
+  border-radius: 8px;
+  background: #141813;
+}
+
+.exercise-instruction-copy summary {
+  min-height: 42px;
+  padding: 11px 12px;
+  color: #dce8d1;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.exercise-explanation-grid {
+  display: grid;
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+
+.exercise-explanation-grid h5 {
+  margin-bottom: 6px;
+  color: #f0b85a;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.exercise-explanation-grid ol,
+.exercise-explanation-grid ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: #c6cdbc;
+  line-height: 1.4;
+  font-size: 13px;
+}
+
+.exercise-explanation-grid p {
+  margin: 0;
 }
 
 .prescription-notes {
@@ -1258,6 +1358,11 @@ h4 {
   font-size: 14px;
 }
 
+.exercise-card-media {
+  padding: 16px;
+  border-top: 1px solid #2f342d;
+}
+
 .risk-pill {
   width: fit-content;
   border: 1px solid #354151;
@@ -1549,6 +1654,20 @@ h4 {
     width: fit-content;
     min-width: 126px;
     order: initial;
+  }
+
+  .prescription-row .exercise-instruction-media {
+    grid-template-columns: 180px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .prescription-row .exercise-media-frame {
+    max-width: none;
+  }
+
+  .exercise-card-media .exercise-instruction-media {
+    grid-template-columns: 260px minmax(0, 1fr);
+    align-items: start;
   }
 
   .summary-strip {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import missingMediaReport from '../../../docs/MISSING_EXERCISE_MEDIA.md?raw';
 import {
   CAPABILITY_IDS,
   EQUIPMENT_IDS,
@@ -6,6 +7,9 @@ import {
   MUSCLE_GROUPS,
   PROJECT45_EXERCISES,
 } from '..';
+
+const gifModules = import.meta.glob('../../../gifs/*.gif', { query: '?url', import: 'default' });
+const legacyGifPaths = new Set(Object.keys(gifModules).map((path) => path.replace('../../../', '../')));
 
 describe('PROJECT45_EXERCISES', () => {
   it('has unique exercise ids', () => {
@@ -26,13 +30,35 @@ describe('PROJECT45_EXERCISES', () => {
       expect(exercise.equipment.required.every((equipment) => knownEquipment.has(equipment))).toBe(true);
       expect(
         'optional' in exercise.equipment
-          ? exercise.equipment.optional.every((equipment) => knownEquipment.has(equipment))
+          ? (exercise.equipment.optional ?? []).every((equipment) => knownEquipment.has(equipment))
           : true,
       ).toBe(true);
       expect(exercise.muscleGroups.primary.every((muscleGroup) => knownMuscleGroups.has(muscleGroup))).toBe(true);
       expect(exercise.muscleGroups.secondary?.every((muscleGroup) => knownMuscleGroups.has(muscleGroup)) ?? true).toBe(
         true,
       );
+    }
+  });
+
+  it('uses existing local GIFs when media is configured', () => {
+    for (const exercise of PROJECT45_EXERCISES) {
+      if (!exercise.media) {
+        continue;
+      }
+
+      expect(exercise.media.kind).toBe('gif');
+      expect(exercise.media.path.startsWith('../gifs/')).toBe(true);
+      expect(legacyGifPaths.has(exercise.media.path)).toBe(true);
+    }
+  });
+
+  it('documents every catalog exercise without media', () => {
+    for (const exercise of PROJECT45_EXERCISES) {
+      if (exercise.media) {
+        continue;
+      }
+
+      expect(missingMediaReport).toContain(`\`${exercise.id}\``);
     }
   });
 });

@@ -51,6 +51,13 @@ export type ExerciseModality = 'strength' | 'cardio' | 'mobility' | 'skill' | 'r
 
 export type ExerciseMeasurement = 'reps' | 'time' | 'distance' | 'load' | 'rounds';
 
+export type ExerciseMedia = Readonly<{
+  kind: 'gif' | 'video';
+  path: string;
+  alt: string;
+  source?: string;
+}>;
+
 export type MuscleTarget = Readonly<{
   primary: readonly MuscleGroup[];
   secondary?: readonly MuscleGroup[];
@@ -66,14 +73,17 @@ export type Exercise = Readonly<{
   name: string;
   englishName?: string;
   summary: string;
+  shortInstruction: string;
   modality: ExerciseModality;
   goals: readonly GoalId[];
   capabilities: readonly CapabilityId[];
   equipment: EquipmentRequirement;
   muscleGroups: MuscleTarget;
   measurements: readonly ExerciseMeasurement[];
+  media?: ExerciseMedia;
   risk: ExerciseRisk;
   instructions: readonly string[];
+  commonMistakes: readonly string[];
   coachingCues: readonly string[];
   regressions?: readonly ExerciseId[];
   progressions?: readonly ExerciseId[];
